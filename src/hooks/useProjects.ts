@@ -18,7 +18,7 @@ export function useProjects() {
         if (error) {
             console.error('Error fetching projects:', error)
         } else {
-            setProjects(data || [])
+            setProjects((data as Project[]) || [])
         }
         setLoading(false)
     }, [filter])
@@ -85,7 +85,7 @@ export function useProjects() {
         if (error) {
             console.error('Error searching projects:', error)
         } else {
-            setProjects(data || [])
+            setProjects((data as Project[]) || [])
         }
         setLoading(false)
     }
@@ -96,7 +96,7 @@ export function useProjects() {
             .select('*')
             .eq('status', 'activo')
             .order('name')
-        return data || []
+        return (data as Project[]) || []
     }, [])
 
     return {

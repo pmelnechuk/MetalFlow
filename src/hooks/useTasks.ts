@@ -16,7 +16,7 @@ export function useTasks() {
         if (error) {
             console.error('Error fetching tasks:', error)
         } else {
-            setTasks(data || [])
+            setTasks((data as unknown as Task[]) || [])
         }
         setLoading(false)
     }, [])
@@ -33,11 +33,10 @@ export function useTasks() {
         status?: TaskStatus
         due_date?: string
     }) => {
-        // Get the next position for the status column
         const targetStatus = task.status || 'backlog'
         const maxPos = tasks
             .filter(t => t.status === targetStatus)
-            .reduce((max, t) => Math.max(max, t.position), -1)
+            .reduce((max, t) => Math.max(max, t.position || 0), -1)
 
         const { data, error } = await supabase
             .from('tasks')
@@ -62,16 +61,16 @@ export function useTasks() {
         return data
     }
 
-    const updateTask = async (id: string, updates: Partial<{
-        title: string
-        description: string | null
-        project_id: string | null
-        priority: TaskPriority
-        status: TaskStatus
-        position: number
-        due_date: string | null
-        progress: number
-    }>) => {
+    const updateTask = async (id: string, updates: {
+        title?: string
+        description?: string | null
+        project_id?: string | null
+        priority?: TaskPriority
+        status?: TaskStatus
+        position?: number
+        due_date?: string | null
+        progress?: number
+    }) => {
         const { error } = await supabase
             .from('tasks')
             .update(updates)
@@ -88,7 +87,7 @@ export function useTasks() {
     const moveTask = async (taskId: string, newStatus: TaskStatus) => {
         const maxPos = tasks
             .filter(t => t.status === newStatus)
-            .reduce((max, t) => Math.max(max, t.position), -1)
+            .reduce((max, t) => Math.max(max, t.position || 0), -1)
 
         return updateTask(taskId, { status: newStatus, position: maxPos + 1 })
     }
@@ -108,7 +107,7 @@ export function useTasks() {
     }
 
     const getTasksByStatus = (status: TaskStatus) => {
-        return tasks.filter(t => t.status === status).sort((a, b) => a.position - b.position)
+        return tasks.filter(t => t.status === status).sort((a, b) => (a.position || 0) - (b.position || 0))
     }
 
     return {

@@ -8,8 +8,10 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onMenuClick }: TaskCardProps) {
+    const priority = task.priority || 'media'
+    const progress = task.progress || 0
     const isCompleted = task.status === 'terminado'
-    const isUrgent = task.priority === 'alta'
+    const isUrgent = priority === 'alta'
     const isInProgress = task.status === 'en_proceso'
 
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -28,25 +30,25 @@ export function TaskCard({ task, onMenuClick }: TaskCardProps) {
             {...attributes}
             style={style as any}
             className={`group border-[2px] border-black rounded-xl p-3.5 relative transition-all cursor-grab active:cursor-grabbing ${isDragging
-                    ? 'shadow-[6px_6px_0px_0px_#000000] scale-[1.02] opacity-90 rotate-1'
-                    : isCompleted
-                        ? 'bg-gray-50 opacity-70 border-gray-300'
-                        : isUrgent
-                            ? 'bg-red-50/50 card-shadow-sm hover:shadow-[4px_4px_0px_0px_#000000] hover:-translate-y-0.5'
-                            : isInProgress
-                                ? 'bg-white card-shadow-sm border-hc-accent hover:shadow-[4px_4px_0px_0px_#000000] hover:-translate-y-0.5'
-                                : 'bg-white card-shadow-sm hover:shadow-[4px_4px_0px_0px_#000000] hover:-translate-y-0.5'
+                ? 'shadow-[6px_6px_0px_0px_#000000] scale-[1.02] opacity-90 rotate-1'
+                : isCompleted
+                    ? 'bg-gray-50 opacity-70 border-gray-300'
+                    : isUrgent
+                        ? 'bg-red-50/50 card-shadow-sm hover:shadow-[4px_4px_0px_0px_#000000] hover:-translate-y-0.5'
+                        : isInProgress
+                            ? 'bg-white card-shadow-sm border-hc-accent hover:shadow-[4px_4px_0px_0px_#000000] hover:-translate-y-0.5'
+                            : 'bg-white card-shadow-sm hover:shadow-[4px_4px_0px_0px_#000000] hover:-translate-y-0.5'
                 }`}
         >
             {/* Priority indicator */}
             {!isCompleted && (
-                <div className={`absolute top-0 left-3 right-3 h-[2px] rounded-b-full ${isUrgent ? 'bg-red-500' : task.priority === 'media' ? 'bg-amber-400' : 'bg-green-400'
+                <div className={`absolute top-0 left-3 right-3 h-[2px] rounded-b-full ${isUrgent ? 'bg-red-500' : priority === 'media' ? 'bg-amber-400' : 'bg-green-400'
                     }`} />
             )}
 
             <div className="flex justify-between items-start mb-1.5">
-                <span className={`px-2 py-0.5 font-extrabold text-[10px] uppercase rounded ${getPriorityStyles(task.priority)} ${isCompleted ? 'opacity-50' : ''}`}>
-                    {isCompleted ? '✓ LISTO' : getPriorityLabel(task.priority)}
+                <span className={`px-2 py-0.5 font-extrabold text-[10px] uppercase rounded ${getPriorityStyles(priority)} ${isCompleted ? 'opacity-50' : ''}`}>
+                    {isCompleted ? '✓ LISTO' : getPriorityLabel(priority)}
                 </span>
                 {!isCompleted && (
                     <button
@@ -74,9 +76,9 @@ export function TaskCard({ task, onMenuClick }: TaskCardProps) {
             {isInProgress && (
                 <div className="mb-1.5">
                     <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                        <div className="bg-hc-accent h-full rounded-full transition-all duration-500" style={{ width: `${task.progress}%` }} />
+                        <div className="bg-hc-accent h-full rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
                     </div>
-                    <p className="text-right text-[10px] font-extrabold text-hc-accent mt-0.5">{task.progress}%</p>
+                    <p className="text-right text-[10px] font-extrabold text-hc-accent mt-0.5">{progress}%</p>
                 </div>
             )}
 

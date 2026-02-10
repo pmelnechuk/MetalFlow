@@ -1,50 +1,112 @@
-export type TaskPriority = 'alta' | 'media' | 'baja'
-export type TaskStatus = 'backlog' | 'por_hacer' | 'en_proceso' | 'terminado'
-export type ProjectStatus = 'activo' | 'inactivo'
+export type Json =
+    | string
+    | number
+    | boolean
+    | null
+    | { [key: string]: Json | undefined }
+    | Json[]
 
-export interface Project {
-    id: string
-    name: string
-    client: string
-    status: ProjectStatus
-    created_at: string
-    updated_at: string
-}
-
-export interface Task {
-    id: string
-    title: string
-    description: string | null
-    project_id: string | null
-    priority: TaskPriority
-    status: TaskStatus
-    position: number
-    due_date: string | null
-    progress: number
-    created_at: string
-    updated_at: string
-    // Joined
-    project?: Project
-}
-
-export interface Database {
+export type Database = {
+    __InternalSupabase: {
+        PostgrestVersion: "14.1"
+    }
     public: {
         Tables: {
             projects: {
-                Row: Project
-                Insert: Omit<Project, 'id' | 'created_at' | 'updated_at'>
-                Update: Partial<Omit<Project, 'id' | 'created_at' | 'updated_at'>>
+                Row: {
+                    client: string
+                    created_at: string | null
+                    id: string
+                    name: string
+                    status: Database["public"]["Enums"]["project_status"] | null
+                    updated_at: string | null
+                }
+                Insert: {
+                    client: string
+                    created_at?: string | null
+                    id?: string
+                    name: string
+                    status?: Database["public"]["Enums"]["project_status"] | null
+                    updated_at?: string | null
+                }
+                Update: {
+                    client?: string
+                    created_at?: string | null
+                    id?: string
+                    name?: string
+                    status?: Database["public"]["Enums"]["project_status"] | null
+                    updated_at?: string | null
+                }
+                Relationships: []
             }
             tasks: {
-                Row: Task
-                Insert: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'project'>
-                Update: Partial<Omit<Task, 'id' | 'created_at' | 'updated_at' | 'project'>>
+                Row: {
+                    created_at: string | null
+                    description: string | null
+                    due_date: string | null
+                    id: string
+                    position: number | null
+                    priority: Database["public"]["Enums"]["task_priority"] | null
+                    progress: number | null
+                    project_id: string | null
+                    status: Database["public"]["Enums"]["task_status"] | null
+                    title: string
+                    updated_at: string | null
+                }
+                Insert: {
+                    created_at?: string | null
+                    description?: string | null
+                    due_date?: string | null
+                    id?: string
+                    position?: number | null
+                    priority?: Database["public"]["Enums"]["task_priority"] | null
+                    progress?: number | null
+                    project_id?: string | null
+                    status?: Database["public"]["Enums"]["task_status"] | null
+                    title: string
+                    updated_at?: string | null
+                }
+                Update: {
+                    created_at?: string | null
+                    description?: string | null
+                    due_date?: string | null
+                    id?: string
+                    position?: number | null
+                    priority?: Database["public"]["Enums"]["task_priority"] | null
+                    progress?: number | null
+                    project_id?: string | null
+                    status?: Database["public"]["Enums"]["task_status"] | null
+                    title?: string
+                    updated_at?: string | null
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "tasks_project_id_fkey"
+                        columns: ["project_id"]
+                        isOneToOne: false
+                        referencedRelation: "projects"
+                        referencedColumns: ["id"]
+                    },
+                ]
             }
         }
+        Views: Record<string, never>
+        Functions: Record<string, never>
         Enums: {
-            task_priority: TaskPriority
-            task_status: TaskStatus
-            project_status: ProjectStatus
+            project_status: "activo" | "inactivo"
+            task_priority: "alta" | "media" | "baja"
+            task_status: "backlog" | "por_hacer" | "en_proceso" | "terminado"
         }
+        CompositeTypes: Record<string, never>
     }
+}
+
+// Convenience types
+export type TaskPriority = Database["public"]["Enums"]["task_priority"]
+export type TaskStatus = Database["public"]["Enums"]["task_status"]
+export type ProjectStatus = Database["public"]["Enums"]["project_status"]
+
+export type Project = Database["public"]["Tables"]["projects"]["Row"]
+export type Task = Database["public"]["Tables"]["tasks"]["Row"] & {
+    project?: Project | null
 }

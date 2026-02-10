@@ -235,11 +235,11 @@ export function KanbanPage() {
                         {menuTask.status === 'en_proceso' && (
                             <div className="mb-5">
                                 <p className="text-xs font-extrabold uppercase text-hc-accent mb-2 border-l-[3px] border-hc-accent pl-2">
-                                    Progreso: {menuTask.progress}%
+                                    Progreso: {menuTask.progress ?? 0}%
                                 </p>
                                 <input
                                     type="range" min="0" max="100" step="5"
-                                    value={menuTask.progress}
+                                    value={menuTask.progress ?? 0}
                                     onChange={(e) => {
                                         const val = parseInt(e.target.value)
                                         updateTask(menuTask.id, { progress: val })
