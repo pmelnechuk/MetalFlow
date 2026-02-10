@@ -12,17 +12,20 @@ export function AIReviewScreen() {
     const { allProjects } = useProjects()
     const [saving, setSaving] = useState(false)
 
+    const aiResult = location.state?.aiResult
     const mockData = location.state?.mockData || {
-        project: 'TINGLADO S.A.',
-        task: 'ESTRUCTURA DE VIGAS IPN',
-        priority: 'alta',
+        project: 'SIN PROYECTO',
+        task: 'TAREA SIN NOMBRE',
+        priority: 'media',
         due_date: new Date().toISOString().split('T')[0],
     }
+
+    const confidence = aiResult?.confidence ?? null
 
     const [project, setProject] = useState(mockData.project)
     const [task, setTask] = useState(mockData.task)
     const [priority, setPriority] = useState<TaskPriority>(mockData.priority)
-    const [dueDate, setDueDate] = useState(mockData.due_date)
+    const [dueDate, setDueDate] = useState(mockData.due_date || '')
     const [projectsList, setProjectsList] = useState<{ id: string; name: string; client: string }[]>([])
     const [matchedProjectId, setMatchedProjectId] = useState<string | null>(null)
 
@@ -51,13 +54,20 @@ export function AIReviewScreen() {
         navigate('/tablero')
     }
 
-    const priorityConfig: Record<string, { emoji: string; bg: string }> = {
-        alta: { emoji: '🔴', bg: 'bg-red-50' },
-        media: { emoji: '🟡', bg: 'bg-amber-50' },
-        baja: { emoji: '🟢', bg: 'bg-green-50' },
+    const priorityConfig: Record<string, { emoji: string; bg: string; border: string }> = {
+        alta: { emoji: '🔴', bg: 'bg-red-50', border: 'border-red-300' },
+        media: { emoji: '🟡', bg: 'bg-amber-50', border: 'border-amber-300' },
+        baja: { emoji: '🟢', bg: 'bg-green-50', border: 'border-green-300' },
     }
 
     const currentPriority = priorityConfig[priority] || priorityConfig.media
+
+    const confidencePercent = confidence !== null ? Math.round(confidence * 100) : null
+    const confidenceColor = confidence !== null
+        ? confidence >= 0.8 ? 'text-green-600 bg-green-50 border-green-300'
+            : confidence >= 0.5 ? 'text-amber-600 bg-amber-50 border-amber-300'
+                : 'text-red-600 bg-red-50 border-red-300'
+        : ''
 
     return (
         <>
@@ -77,13 +87,27 @@ export function AIReviewScreen() {
 
             <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
                 <div className="max-w-xl mx-auto">
-                    {/* Info banner */}
-                    <div className="bg-hc-accent-light border-[2px] border-hc-accent rounded-xl p-3.5 flex items-start gap-3 mb-6">
+                    {/* AI confidence + info banner */}
+                    <div className="bg-hc-accent-light border-[2px] border-hc-accent rounded-xl p-3.5 flex items-start gap-3 mb-4">
                         <span className="material-symbols-outlined text-lg text-hc-accent mt-0.5 icon-filled">smart_toy</span>
-                        <p className="text-sm font-bold text-hc-accent-dark leading-snug">
-                            Estos datos fueron extraídos automáticamente. Editá lo que necesites y confirmá para crear la tarea.
-                        </p>
+                        <div className="flex-1">
+                            <p className="text-sm font-bold text-hc-accent-dark leading-snug">
+                                {aiResult
+                                    ? 'Datos extraídos por Gemini 2.0 Flash. Editá lo que necesites y confirmá.'
+                                    : 'Datos de prueba. Editá lo que necesites y confirmá para crear la tarea.'}
+                            </p>
+                        </div>
                     </div>
+
+                    {/* Confidence badge */}
+                    {confidencePercent !== null && (
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border-[2px] ${confidenceColor} font-extrabold text-sm mb-4`}>
+                            <span className="material-symbols-outlined text-base icon-filled">
+                                {confidence! >= 0.8 ? 'verified' : confidence! >= 0.5 ? 'help' : 'warning'}
+                            </span>
+                            Confianza IA: {confidencePercent}%
+                        </div>
+                    )}
 
                     {/* Form card */}
                     <div className="bg-white border-[3px] border-black rounded-2xl p-6 card-shadow space-y-5">
