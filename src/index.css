@@ -1,0 +1,348 @@
+@import "tailwindcss";
+
+@theme {
+  --color-hc-bg: #FFFFFF;
+  --color-hc-surface: #F4F6F8;
+  --color-hc-text: #000000;
+  --color-hc-accent: #0044CC;
+  --color-hc-accent-dark: #002E8A;
+  --color-hc-accent-light: #E6F0FF;
+  --color-hc-highlight: #D0E1FF;
+  --color-hc-border: #000000;
+  --color-hc-divider: #000000;
+  --color-hc-muted: #94A3B8;
+  --font-display: "Inter", sans-serif;
+}
+
+/* ─── Keyframes ──────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 0.2;
+  }
+
+  100% {
+    transform: scale(0.9);
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes breathe {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes waveBar {
+
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes dotPulse {
+
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Base ───────────────────────────────────────── */
+@layer base {
+  body {
+    min-height: 100dvh;
+    background-color: var(--color-hc-surface);
+    font-family: var(--font-display);
+    color: var(--color-hc-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: var(--color-hc-highlight);
+    color: black;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-hc-muted);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-hc-accent);
+  }
+}
+
+/* ─── Components ─────────────────────────────────── */
+@layer components {
+
+  /* Card shadows */
+  .card-shadow {
+    box-shadow: 4px 4px 0px 0px #000000;
+  }
+
+  .card-shadow-sm {
+    box-shadow: 2px 2px 0px 0px #000000;
+  }
+
+  .card-shadow-lg {
+    box-shadow: 6px 6px 0px 0px #000000;
+  }
+
+  /* Hover lift effect */
+  .card-hover {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 6px 6px 0px 0px #000000;
+  }
+
+  .card-hover:active {
+    transform: translateY(2px);
+    box-shadow: 1px 1px 0px 0px #000000;
+  }
+
+  /* Button press */
+  .btn-press {
+    transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-press:active {
+    transform: translateY(3px);
+    box-shadow: none !important;
+  }
+
+  /* Waveform bars */
+  .waveform-bar {
+    background-color: #000000;
+    border-radius: 9999px;
+    width: 6px;
+    transform-origin: center;
+    transition: height 0.12s ease-out;
+  }
+
+  /* Details/Summary (Kanban sections) */
+  details>summary {
+    list-style: none;
+  }
+
+  details>summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details[open] summary .expand-icon {
+    transform: rotate(180deg);
+  }
+
+  /* Skeleton loading */
+  .skeleton {
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+    border-radius: 8px;
+  }
+
+  /* Staggered animation for lists */
+  .stagger-item {
+    animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+
+  .modal-sheet {
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* FAB animation */
+  .fab-button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .fab-button:hover {
+    transform: scale(1.08) rotate(-3deg);
+    box-shadow: 6px 6px 0px 0px #000000;
+  }
+
+  .fab-button:active {
+    transform: scale(0.95) rotate(0deg);
+    box-shadow: 2px 2px 0px 0px #000000;
+  }
+
+  /* Badge pulse */
+  .badge-pulse {
+    animation: breathe 2s ease-in-out infinite;
+  }
+
+  /* Active nav indicator line */
+  .nav-active-bar {
+    position: relative;
+  }
+
+  .nav-active-bar::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 25%;
+    width: 50%;
+    height: 4px;
+    background-color: var(--color-hc-accent);
+    border-radius: 0 0 4px 4px;
+    animation: slideDown 0.25s ease-out;
+  }
+
+  /* Counter badge */
+  .counter-badge {
+    animation: countUp 0.3s ease-out forwards;
+  }
+
+  /* Gradient header */
+  .header-gradient {
+    background: linear-gradient(180deg, #FFFFFF 0%, var(--color-hc-surface) 100%);
+  }
+
+  /* Page container */
+  .page-container {
+    max-width: 32rem;
+    /* 512px, same as max-w-lg */
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  @media (min-width: 768px) {
+    .page-container {
+      max-width: 40rem;
+      /* 640px */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .page-container {
+      max-width: 48rem;
+      /* 768px */
+    }
+  }
+
+  /* Filled icon style */
+  .icon-filled {
+    font-variation-settings: 'FILL' 1;
+  }
+}
+
+/* ─── Utilities ──────────────────────────────────── */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
