@@ -3,12 +3,12 @@ export function StatusBar() {
     const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`
 
     return (
-        <div className="h-12 w-full flex items-center justify-between px-6 pt-2 z-20 bg-hc-bg sticky top-0 border-b-2 border-hc-divider">
-            <span className="text-lg font-bold text-black">{timeStr}</span>
-            <div className="flex gap-3 text-black">
-                <span className="material-symbols-outlined text-xl">signal_cellular_alt</span>
-                <span className="material-symbols-outlined text-xl">wifi</span>
-                <span className="material-symbols-outlined text-xl">battery_full</span>
+        <div className="h-8 w-full flex items-center justify-between px-6 z-50 bg-white/90 backdrop-blur-sm sticky top-0 border-b border-gray-100/50">
+            <span className="text-xs font-bold text-gray-900">{timeStr}</span>
+            <div className="flex gap-2 text-gray-900">
+                <span className="material-symbols-outlined text-sm">signal_cellular_alt</span>
+                <span className="material-symbols-outlined text-sm">wifi</span>
+                <span className="material-symbols-outlined text-sm">battery_full</span>
             </div>
         </div>
     )

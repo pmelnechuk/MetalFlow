@@ -14,60 +14,55 @@ export function ProjectCard({ project, taskCount, highPriority, onPress }: Proje
     return (
         <div
             onClick={onPress}
-            className={`card-hover group relative border-[3px] border-black rounded-xl p-5 cursor-pointer transition-all ${isPaused
-                    ? 'bg-gray-50 opacity-70 border-gray-400'
-                    : 'bg-white card-shadow'
+            className={`group bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden ${isPaused ? 'opacity-70 bg-gray-50' : 'hover:border-navy-300'
                 }`}
         >
-            <div className="flex flex-col gap-2.5">
-                {/* Header: Client + Badge */}
-                <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                        <div className={`w-2.5 h-2.5 rounded-full ${isPaused ? 'bg-gray-400' : 'bg-green-500'} shrink-0 mt-0.5`} />
-                        <p className="text-base font-extrabold text-hc-accent uppercase tracking-wider">
-                            {project.client}
-                        </p>
-                    </div>
+            {/* Status Accent Line */}
+            <div className={`absolute top-0 bottom-0 left-0 w-1 ${isPaused ? 'bg-gray-300' : 'bg-navy-600 group-hover:bg-royal-blue transition-colors'}`} />
+
+            <div className="pl-3">
+                <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                        {project.client}
+                    </span>
                     {highPriority && (
-                        <div className="bg-hc-highlight text-black border-2 border-black px-2.5 py-0.5 font-extrabold text-xs uppercase rounded shadow-[2px_2px_0px_0px_#000000] badge-pulse shrink-0">
-                            URGENTE
-                        </div>
-                    )}
-                    {isPaused && (
-                        <div className="bg-gray-100 text-gray-600 px-2.5 py-0.5 font-extrabold text-xs uppercase border-2 border-gray-400 rounded shrink-0">
-                            PAUSADO
-                        </div>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-50 text-red-600 border border-red-100">
+                            Urgente
+                        </span>
                     )}
                 </div>
 
-                {/* Project name */}
-                <h3 className="text-2xl sm:text-[1.65rem] font-black text-black leading-tight">
+                <h3 className={`text-lg font-bold text-navy-900 mb-3 leading-snug ${isPaused ? 'text-gray-600' : 'group-hover:text-royal-blue transition-colors'}`}>
                     {project.name}
                 </h3>
 
-                {/* Footer: date + task count */}
-                <div className="flex items-center gap-3 mt-1">
-                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-sm ${isPaused
-                            ? 'border-2 border-red-600/50 text-red-700 bg-red-50'
-                            : 'border-2 border-black bg-hc-surface'
-                        }`}>
-                        <span className={`material-symbols-outlined text-lg ${isPaused ? '' : 'text-hc-accent'}`}>
-                            {isPaused ? 'pause_circle' : 'calendar_today'}
-                        </span>
-                        <span className="font-extrabold">
-                            {isPaused ? 'EN ESPERA' : formatDate(project.created_at)}
-                        </span>
-                    </div>
-                    {taskCount !== undefined && taskCount > 0 && (
-                        <div className="flex items-center gap-1.5 text-gray-500">
-                            <span className="material-symbols-outlined text-lg">task</span>
-                            <span className="text-sm font-extrabold">{taskCount}</span>
+                <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
+                    <div className="flex items-center gap-3 text-xs font-medium text-gray-500">
+                        <div className="flex items-center gap-1">
+                            <span className="material-symbols-outlined text-base">calendar_today</span>
+                            <span>{formatDate(project.created_at)}</span>
                         </div>
-                    )}
-                    {/* Chevron */}
-                    <span className="material-symbols-outlined text-xl text-gray-300 ml-auto group-hover:text-hc-accent group-hover:translate-x-1 transition-all">
-                        chevron_right
-                    </span>
+                        {taskCount !== undefined && taskCount > 0 && (
+                            <div className="flex items-center gap-1 text-navy-600 font-bold">
+                                <span className="material-symbols-outlined text-base">task</span>
+                                <span>{taskCount}</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                        {isPaused ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold uppercase">
+                                <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                Pausado
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 text-green-700 text-[10px] font-bold uppercase border border-green-100">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                                Activo
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

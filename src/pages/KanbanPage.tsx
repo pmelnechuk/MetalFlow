@@ -13,11 +13,11 @@ import { getStatusLabel, getStatusIcon, cn } from '../lib/utils'
 
 const STATUSES: TaskStatus[] = ['backlog', 'por_hacer', 'en_proceso', 'terminado']
 
-const STATUS_COLORS: Record<TaskStatus, { bg: string; text: string; iconBg: string }> = {
-    backlog: { bg: 'bg-gray-50', text: 'text-gray-500', iconBg: 'bg-gray-100' },
-    por_hacer: { bg: 'bg-amber-50', text: 'text-amber-600', iconBg: 'bg-amber-100' },
-    en_proceso: { bg: 'bg-blue-50', text: 'text-hc-accent', iconBg: 'bg-blue-100' },
-    terminado: { bg: 'bg-green-50', text: 'text-green-600', iconBg: 'bg-green-100' },
+const STATUS_COLORS: Record<TaskStatus, { bg: string; text: string; iconBg: string; border: string }> = {
+    backlog: { bg: 'bg-slate-50', text: 'text-slate-600', iconBg: 'bg-white', border: 'border-slate-200' },
+    por_hacer: { bg: 'bg-amber-50', text: 'text-amber-700', iconBg: 'bg-white', border: 'border-amber-200' },
+    en_proceso: { bg: 'bg-blue-50', text: 'text-royal-blue', iconBg: 'bg-white', border: 'border-blue-200' },
+    terminado: { bg: 'bg-green-50', text: 'text-green-700', iconBg: 'bg-white', border: 'border-green-200' },
 }
 
 function KanbanColumn({ status, tasks, onMenuClick, onTaskClick }: { status: TaskStatus; tasks: Task[]; onMenuClick: (t: Task) => void; onTaskClick: (t: Task) => void }) {
@@ -27,16 +27,16 @@ function KanbanColumn({ status, tasks, onMenuClick, onTaskClick }: { status: Tas
     return (
         <div className="flex flex-col min-w-[280px] lg:min-w-[300px] max-w-[340px] w-full shrink-0">
             {/* Column header */}
-            <div className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border-[2px] border-black ${colors.bg} mb-3 sticky top-0 z-10`}>
-                <div className={`w-8 h-8 rounded-lg ${colors.iconBg} border-2 border-black flex items-center justify-center`}>
-                    <span className={`material-symbols-outlined text-lg icon-filled ${colors.text}`}>
+            <div className={`flex items-center gap-3 px-4 py-3 rounded-t-lg border-b-2 ${colors.border} ${colors.bg} mb-0 sticky top-0 z-10`}>
+                <div className={`w-6 h-6 rounded-md ${colors.iconBg} flex items-center justify-center shadow-sm`}>
+                    <span className={`material-symbols-outlined text-base icon-filled ${colors.text}`}>
                         {getStatusIcon(status)}
                     </span>
                 </div>
-                <h2 className="text-sm font-black text-black uppercase tracking-wide flex-1">
+                <h2 className={`text-xs font-bold uppercase tracking-wider flex-1 ${colors.text}`}>
                     {getStatusLabel(status)}
                 </h2>
-                <span className={`text-xs font-extrabold px-2 py-0.5 rounded-full border-2 border-black ${colors.bg} ${colors.text}`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-white shadow-sm ${colors.text}`}>
                     {tasks.length}
                 </span>
             </div>
@@ -45,17 +45,17 @@ function KanbanColumn({ status, tasks, onMenuClick, onTaskClick }: { status: Tas
             <div
                 ref={setNodeRef}
                 className={cn(
-                    'flex-1 space-y-3 p-2 rounded-xl transition-all duration-200 min-h-[200px]',
-                    isOver ? 'bg-hc-accent-light/40 ring-2 ring-hc-accent ring-dashed' : ''
+                    'flex-1 space-y-3 p-3 bg-slate-50/50 rounded-b-lg border-x border-b border-gray-100 min-h-[200px]',
+                    isOver ? 'bg-blue-50/50 ring-2 ring-royal-blue ring-inset' : ''
                 )}
             >
                 {tasks.length === 0 ? (
                     <div className={cn(
-                        'text-center py-10 border-2 border-dashed rounded-xl transition-colors',
-                        isOver ? 'border-hc-accent bg-hc-accent-light/30' : 'border-gray-200'
+                        'text-center py-12 border-2 border-dashed rounded-lg transition-colors',
+                        isOver ? 'border-royal-blue bg-blue-50/50' : 'border-slate-200'
                     )}>
-                        <span className="material-symbols-outlined text-2xl text-gray-300 mb-1">inbox</span>
-                        <p className="text-xs font-bold text-gray-400 uppercase">Arrastrá tareas aquí</p>
+                        <span className="material-symbols-outlined text-2xl text-slate-300 mb-2">inbox</span>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Vacío</p>
                     </div>
                 ) : (
                     tasks.map((task) => (

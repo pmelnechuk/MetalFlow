@@ -13,22 +13,22 @@ export function Sidebar() {
     const navigate = useNavigate()
 
     return (
-        <aside className="hidden md:flex flex-col w-[240px] lg:w-[260px] bg-white border-r-[3px] border-black h-screen sticky top-0 shrink-0">
+        <aside className="hidden md:flex flex-col w-[240px] lg:w-[260px] bg-white border-r border-gray-200 h-screen sticky top-0 shrink-0 shadow-[1px_0_3px_0_rgba(0,0,0,0.05)]">
             {/* Brand */}
-            <div className="px-5 py-6 border-b-[3px] border-black">
+            <div className="px-6 py-6 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-hc-accent rounded-xl border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_#000000]">
+                    <div className="w-10 h-10 bg-navy-900 rounded-lg flex items-center justify-center shadow-sm">
                         <span className="material-symbols-outlined text-white text-xl icon-filled">precision_manufacturing</span>
                     </div>
                     <div>
-                        <h1 className="text-lg font-black uppercase tracking-wider text-black leading-none">MetalFlow</h1>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gestión de Taller</p>
+                        <h1 className="text-lg font-bold uppercase tracking-tight text-navy-900 leading-none">MetalFlow</h1>
+                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest mt-1">Gestión de Taller</p>
                     </div>
                 </div>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 px-3 py-4 space-y-1">
+            <nav className="flex-1 px-3 py-6 space-y-1">
                 {navItems.map((item) => {
                     const isActive = item.path === '/'
                         ? location.pathname === '/'
@@ -38,39 +38,36 @@ export function Sidebar() {
                             key={item.path}
                             onClick={() => navigate(item.path)}
                             className={cn(
-                                'w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-base uppercase tracking-wide transition-all group',
+                                'w-full flex items-center gap-3 px-4 py-3 rounded-md font-medium text-base transition-all group relative',
                                 isActive
-                                    ? 'bg-hc-accent text-white shadow-[3px_3px_0px_0px_#000000] border-[2px] border-black'
-                                    : 'text-gray-500 hover:bg-hc-surface hover:text-black border-2 border-transparent'
+                                    ? 'text-navy-900 bg-blue-50/50'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-navy-900'
                             )}
                         >
+                            {isActive && (
+                                <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] bg-navy-900 rounded-r-md" />
+                            )}
                             <span className={cn(
                                 'material-symbols-outlined text-[22px]',
                                 isActive && 'icon-filled'
                             )}>
                                 {item.icon}
                             </span>
-                            <span className="text-sm">{item.label}</span>
-                            {item.path === '/voz' && (
-                                <div className={cn(
-                                    'ml-auto w-2.5 h-2.5 rounded-full',
-                                    isActive ? 'bg-white' : 'bg-red-500'
-                                )} />
-                            )}
+                            <span className={cn("text-sm uppercase tracking-wide", isActive ? "font-bold" : "font-medium")}>{item.label}</span>
                         </button>
                     )
                 })}
             </nav>
 
             {/* Footer */}
-            <div className="px-5 py-4 border-t-[3px] border-black">
+            <div className="px-5 py-4 border-t border-gray-100 bg-gray-50/50">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-hc-surface rounded-lg border-2 border-black flex items-center justify-center">
-                        <span className="material-symbols-outlined text-lg text-gray-500">person</span>
+                    <div className="w-9 h-9 bg-white rounded-full border border-gray-200 flex items-center justify-center shadow-sm text-navy-700">
+                        <span className="material-symbols-outlined text-lg">person</span>
                     </div>
                     <div className="min-w-0 flex-1">
-                        <p className="text-sm font-black text-black truncate">El Jefe</p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase">Admin</p>
+                        <p className="text-sm font-bold text-navy-900 truncate">El Jefe</p>
+                        <p className="text-[10px] font-medium text-gray-400 uppercase">Admin</p>
                     </div>
                 </div>
             </div>

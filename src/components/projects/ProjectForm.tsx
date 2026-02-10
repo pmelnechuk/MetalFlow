@@ -17,28 +17,22 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
     }
 
     return (
-        <>
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-hc-accent rounded-lg border-2 border-black flex items-center justify-center">
-                        <span className="material-symbols-outlined text-xl text-white icon-filled">
-                            {initialData ? 'edit' : 'create_new_folder'}
-                        </span>
-                    </div>
-                    <h2 className="text-2xl font-black uppercase text-black">
-                        {initialData ? 'Editar Proyecto' : 'Nuevo Proyecto'}
-                    </h2>
-                </div>
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h2 className="text-lg font-bold text-navy-900 uppercase tracking-tight">
+                    {initialData ? 'Editar Proyecto' : 'Nuevo Proyecto'}
+                </h2>
                 <button
                     onClick={onCancel}
-                    className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                    className="w-8 h-8 rounded-full hover:bg-white hover:shadow-sm flex items-center justify-center transition-all text-gray-400"
                 >
-                    <span className="material-symbols-outlined text-2xl text-gray-400">close</span>
+                    <span className="material-symbols-outlined text-xl">close</span>
                 </button>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
                 <div>
-                    <label className="text-xs font-extrabold uppercase text-hc-accent block mb-2 border-l-[4px] border-hc-accent pl-2.5">
+                    <label className="text-xs font-bold uppercase text-gray-500 mb-2 block tracking-wide">
                         Nombre del Proyecto
                     </label>
                     <input
@@ -46,11 +40,12 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Ej: Estructura de Vigas IPN"
-                        className="block w-full px-4 py-3.5 border-[3px] border-black rounded-xl bg-white text-lg font-bold text-black placeholder-gray-400 focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-semibold text-navy-900 placeholder-gray-400 focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none transition-all"
+                        autoFocus
                     />
                 </div>
                 <div>
-                    <label className="text-xs font-extrabold uppercase text-hc-accent block mb-2 border-l-[4px] border-hc-accent pl-2.5">
+                    <label className="text-xs font-bold uppercase text-gray-500 mb-2 block tracking-wide">
                         Cliente
                     </label>
                     <input
@@ -58,28 +53,28 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
                         value={client}
                         onChange={(e) => setClient(e.target.value)}
                         placeholder="Ej: Tinglado S.A."
-                        className="block w-full px-4 py-3.5 border-[3px] border-black rounded-xl bg-white text-lg font-bold text-black placeholder-gray-400 focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-semibold text-navy-900 placeholder-gray-400 focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none transition-all"
                     />
                 </div>
-                <div className="space-y-3 pt-2">
-                    <button
-                        type="submit"
-                        disabled={!name.trim() || !client.trim()}
-                        className="w-full py-4 px-4 border-[3px] border-black bg-hc-accent text-white font-black text-xl uppercase rounded-xl shadow-[4px_4px_0px_0px_#000000] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                        <span className="material-symbols-outlined text-2xl icon-filled">check_circle</span>
-                        {initialData ? 'Guardar' : 'Crear Proyecto'}
-                    </button>
+
+                <div className="pt-4 flex gap-3">
                     <button
                         type="button"
                         onClick={onCancel}
-                        className="w-full py-3.5 px-4 border-[3px] border-black bg-white text-black font-black text-lg uppercase rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 font-bold text-sm uppercase rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                        <span className="material-symbols-outlined text-2xl">close</span>
                         Cancelar
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={!name.trim() || !client.trim()}
+                        className="flex-1 py-3 px-4 bg-navy-900 text-white font-bold text-sm uppercase rounded-lg shadow-md hover:bg-navy-800 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <span className="material-symbols-outlined text-xl icon-filled">check</span>
+                        {initialData ? 'Guardar' : 'Crear'}
                     </button>
                 </div>
             </form>
-        </>
+        </div>
     )
 }

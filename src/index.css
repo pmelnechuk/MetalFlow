@@ -1,20 +1,33 @@
 @import "tailwindcss";
 
 @theme {
-  --color-hc-bg: #FFFFFF;
-  --color-hc-surface: #F4F6F8;
-  --color-hc-text: #000000;
+  --color-hc-bg: #F8FAFC;
+  --color-hc-surface: #FFFFFF;
+  --color-hc-text: #0F172A;
   --color-hc-accent: #0044CC;
-  --color-hc-accent-dark: #002E8A;
-  --color-hc-accent-light: #E6F0FF;
-  --color-hc-highlight: #D0E1FF;
-  --color-hc-border: #000000;
-  --color-hc-divider: #000000;
-  --color-hc-muted: #94A3B8;
-  --font-display: "Inter", sans-serif;
+  /* Royal Blue */
+  --color-hc-accent-dark: #162F65;
+  /* Navy 900 (Lighter) */
+  --color-hc-accent-light: #F0F4F8;
+  /* Slate 50/Blue Light */
+  --color-hc-highlight: #E2E8F0;
+  --color-hc-border: #E2E8F0;
+  /* Slate 200 */
+  --color-hc-divider: #CBD5E1;
+  /* Slate 300 */
+  --color-hc-muted: #64748B;
+  /* Slate 500 */
+
+  --color-navy-900: #162F65;
+  --color-navy-800: #1E3A8A;
+  --color-navy-700: #2563EB;
+  --color-royal-blue: #0044CC;
+
+  --font-display: "Roboto", sans-serif;
+  --font-body: "Inter", sans-serif;
 }
 
-/* ─── Keyframes ──────────────────────────────────── */
+/* ─── Keyframes (Kept existing animations) ──────────────────────────────────── */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -59,33 +72,6 @@
   }
 }
 
-@keyframes pulseRing {
-  0% {
-    transform: scale(0.9);
-    opacity: 0.5;
-  }
-
-  50% {
-    transform: scale(1.15);
-    opacity: 0.2;
-  }
-
-  100% {
-    transform: scale(0.9);
-    opacity: 0.5;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-
-  100% {
-    background-position: 200% 0;
-  }
-}
-
 @keyframes breathe {
 
   0%,
@@ -95,30 +81,6 @@
 
   50% {
     transform: scale(1.03);
-  }
-}
-
-@keyframes waveBar {
-
-  0%,
-  100% {
-    transform: scaleY(0.3);
-  }
-
-  50% {
-    transform: scaleY(1);
-  }
-}
-
-@keyframes dotPulse {
-
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-
-  50% {
-    opacity: 1;
   }
 }
 
@@ -134,20 +96,39 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 /* ─── Base ───────────────────────────────────────── */
 @layer base {
   body {
     min-height: 100dvh;
-    background-color: var(--color-hc-surface);
-    font-family: var(--font-display);
+    background-color: var(--color-hc-bg);
+    font-family: var(--font-body);
     color: var(--color-hc-text);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+  }
+
   ::selection {
-    background-color: var(--color-hc-highlight);
-    color: black;
+    background-color: var(--color-navy-900);
+    color: white;
   }
 
   /* Smooth scrolling */
@@ -165,55 +146,47 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--color-hc-muted);
+    background: #CBD5E1;
     border-radius: 999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-hc-accent);
+    background: var(--color-navy-700);
   }
 }
 
 /* ─── Components ─────────────────────────────────── */
 @layer components {
 
-  /* Card shadows */
+  /* Formal Card Shadows (Soft) */
   .card-shadow {
-    box-shadow: 4px 4px 0px 0px #000000;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   }
 
   .card-shadow-sm {
-    box-shadow: 2px 2px 0px 0px #000000;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 
   .card-shadow-lg {
-    box-shadow: 6px 6px 0px 0px #000000;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 
-  /* Hover lift effect */
+  /* Hover lift effect (Formal) */
   .card-hover {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease-in-out;
   }
 
   .card-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 6px 6px 0px 0px #000000;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
   .card-hover:active {
-    transform: translateY(2px);
-    box-shadow: 1px 1px 0px 0px #000000;
+    transform: translateY(0);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   }
 
-  /* Button press */
-  .btn-press {
-    transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .btn-press:active {
-    transform: translateY(3px);
-    box-shadow: none !important;
-  }
+  /* Removed legacy neobrutalist button press styles for cleaner active states */
 
   /* Waveform bars */
   .waveform-bar {
@@ -266,13 +239,13 @@
   }
 
   .fab-button:hover {
-    transform: scale(1.08) rotate(-3deg);
-    box-shadow: 6px 6px 0px 0px #000000;
+    transform: scale(1.05);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 
   .fab-button:active {
-    transform: scale(0.95) rotate(0deg);
-    box-shadow: 2px 2px 0px 0px #000000;
+    transform: scale(0.95);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
 
   /* Badge pulse */

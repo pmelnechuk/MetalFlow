@@ -1,6 +1,7 @@
-import { formatDate, getPriorityLabel, getPriorityStyles } from '../../lib/utils'
+import { formatDate } from '../../lib/utils'
 import type { Task } from '../../types/database'
 import { useDraggable } from '@dnd-kit/core'
+import { cn } from '../../lib/utils'
 
 interface TaskCardProps {
     task: Task
@@ -13,7 +14,6 @@ export function TaskCard({ task, onMenuClick, onTaskClick }: TaskCardProps) {
     const progress = task.progress || 0
     const isCompleted = task.status === 'terminado'
     const isUrgent = priority === 'alta'
-    const isInProgress = task.status === 'en_proceso'
 
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: task.id,
@@ -24,6 +24,37 @@ export function TaskCard({ task, onMenuClick, onTaskClick }: TaskCardProps) {
         zIndex: 50,
     } : undefined
 
+    // Priority Styles
+    const getPriorityClasses = (p: string) => {
+        switch (p) {
+            case 'alta': // Urgente in UI
+                return 'border-l-4 border-l-red-600'
+            case 'media': // Alta in UI
+                return 'border-l-4 border-l-royal-blue'
+            default: // Baja / Normal
+                return 'border-l-0' // No L-border for normal
+        }
+    }
+
+    const getTagClasses = (p: string) => {
+        switch (p) {
+            case 'alta':
+                return 'bg-red-50 text-red-700 border border-red-100'
+            case 'media':
+                return 'bg-blue-50 text-royal-blue border border-blue-100'
+            default:
+                return 'bg-slate-100 text-slate-700 border border-slate-300'
+        }
+    }
+
+    const getLabel = (p: string) => {
+        switch (p) {
+            case 'alta': return 'Urgente'
+            case 'media': return 'Alta Prioridad'
+            default: return 'Normal'
+        }
+    }
+
     return (
         <div
             ref={setNodeRef}
@@ -31,85 +62,78 @@ export function TaskCard({ task, onMenuClick, onTaskClick }: TaskCardProps) {
             {...attributes}
             style={style as any}
             onClick={() => onTaskClick?.(task)}
-            className={`group border-[2px] border-black rounded-xl p-3.5 relative transition-all cursor-grab active:cursor-grabbing ${isDragging
-                ? 'shadow-[6px_6px_0px_0px_#000000] scale-[1.02] opacity-90 rotate-1'
-                : isCompleted
-                    ? 'bg-gray-50 opacity-70 border-gray-300'
-                    : isUrgent
-                        ? 'bg-red-50/50 card-shadow-sm hover:shadow-[4px_4px_0px_0px_#000000] hover:-translate-y-0.5'
-                        : isInProgress
-                            ? 'bg-white card-shadow-sm border-hc-accent hover:shadow-[4px_4px_0px_0px_#000000] hover:-translate-y-0.5'
-                            : 'bg-white card-shadow-sm hover:shadow-[4px_4px_0px_0px_#000000] hover:-translate-y-0.5'
-                }`}
+            className={cn(
+                "group bg-white border border-slate-200 rounded-sm p-4 shadow-formal transition-all cursor-grab active:cursor-grabbing hover:border-navy-700 relative",
+                getPriorityClasses(priority),
+                isDragging && "shadow-floating scale-[1.02] opacity-90 rotate-1 z-50",
+                isCompleted && "opacity-70 bg-slate-50"
+            )}
         >
-            {/* Priority indicator */}
-            {!isCompleted && (
-                <div className={`absolute top-0 left-3 right-3 h-[2px] rounded-b-full ${isUrgent ? 'bg-red-500' : priority === 'media' ? 'bg-amber-400' : 'bg-green-400'
-                    }`} />
+            {/* Header: Tag + Menu */}
+            <div className="flex justify-between items-start mb-2">
+                <span className={cn(
+                    "px-2 py-0.5 font-bold text-xs uppercase rounded-sm flex items-center gap-1",
+                    getTagClasses(priority)
+                )}>
+                    {isUrgent && <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></span>}
+                    {isCompleted ? 'Completado' : getLabel(priority)}
+                </span>
+
+                <button
+                    onClick={(e) => { e.stopPropagation(); onMenuClick?.(task) }}
+                    className="text-slate-400 hover:text-navy-900 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                    <span className="material-symbols-outlined text-xl">more_horiz</span>
+                </button>
+            </div>
+
+            {/* Content */}
+            <h3 className={cn(
+                "text-lg font-bold text-slate-900 leading-tight mb-1",
+                isCompleted && "line-through text-slate-500"
+            )}>
+                {task.title}
+            </h3>
+            <p className={cn(
+                "text-base text-slate-600 mb-3 font-medium line-clamp-2",
+                isCompleted && "line-through text-slate-400"
+            )}>
+                {task.description || (task.project?.client ? `Cliente: ${task.project.client}` : 'Sin descripción')}
+            </p>
+
+            {/* Progress Bar (if in progress) */}
+            {task.status === 'en_proceso' && !isCompleted && (
+                <div className="flex items-center gap-3 mb-3">
+                    <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
+                        <div className="bg-royal-blue h-full rounded-full transition-all" style={{ width: `${progress}%` }}></div>
+                    </div>
+                    <span className="text-xs font-bold text-royal-blue whitespace-nowrap">{progress}%</span>
+                </div>
             )}
 
-            <div className="flex justify-between items-start mb-1.5">
-                <span className={`px-2 py-0.5 font-extrabold text-[10px] uppercase rounded ${getPriorityStyles(priority)} ${isCompleted ? 'opacity-50' : ''}`}>
-                    {isCompleted ? '✓ LISTO' : getPriorityLabel(priority)}
-                </span>
-                {!isCompleted && (
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onMenuClick?.(task) }}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-hc-surface transition-all"
-                    >
-                        <span className="material-symbols-outlined text-base text-gray-400">more_vert</span>
-                    </button>
+            {/* Footer: Date / Users */}
+            <div className="flex items-center justify-between border-t border-slate-100 pt-2 mt-auto">
+                {task.due_date && (
+                    <div className={cn(
+                        "flex items-center gap-2 text-sm font-semibold",
+                        isUrgent ? "text-red-700" : "text-navy-700"
+                    )}>
+                        <span className="material-symbols-outlined text-lg">event</span>
+                        <span>{formatDate(task.due_date).toUpperCase()}</span>
+                    </div>
                 )}
-                {isCompleted && (
-                    <div className="w-6 h-6 bg-green-100 rounded-md flex items-center justify-center border border-green-500">
-                        <span className="material-symbols-outlined text-sm text-green-700 icon-filled">check</span>
+
+                {/* Users Avatars (Placeholder or initials) */}
+                {task.assigned_to && task.assigned_to.length > 0 && (
+                    <div className="flex -space-x-2">
+                        {task.assigned_to.slice(0, 3).map((u, i) => (
+                            <div key={i} className="w-6 h-6 rounded-full bg-navy-100 border border-white flex items-center justify-center text-[10px] font-bold text-navy-800 uppercase" title={u}>
+                                {u.substring(0, 2)}
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
-
-            <h3 className={`text-sm font-black text-black leading-tight mb-0.5 ${isCompleted ? 'line-through text-gray-500' : ''}`}>
-                {task.project?.client || 'Sin cliente'}
-            </h3>
-            <p className={`text-xs font-semibold mb-1 ${isCompleted ? 'line-through text-gray-400' : 'text-gray-500'}`}>
-                {task.title}
-            </p>
-
-            {/* Description preview */}
-            {!isCompleted && task.description && (
-                <p className="text-[11px] text-gray-400 font-medium leading-snug mb-1.5 line-clamp-2">
-                    {task.description}
-                </p>
-            )}
-
-            {/* Assigned employees */}
-            {!isCompleted && task.assigned_to && task.assigned_to.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-1.5">
-                    {task.assigned_to.map((emp, i) => (
-                        <span key={i} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-hc-accent-light rounded text-[10px] font-extrabold text-hc-accent-dark uppercase">
-                            <span className="material-symbols-outlined" style={{ fontSize: '10px' }}>person</span>
-                            {emp}
-                        </span>
-                    ))}
-                </div>
-            )}
-
-            {/* Progress */}
-            {isInProgress && (
-                <div className="mb-1.5">
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                        <div className="bg-hc-accent h-full rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
-                    </div>
-                    <p className="text-right text-[10px] font-extrabold text-hc-accent mt-0.5">{progress}%</p>
-                </div>
-            )}
-
-            {/* Date */}
-            {!isCompleted && task.due_date && (
-                <div className="flex items-center gap-1 text-gray-400">
-                    <span className="material-symbols-outlined text-xs">event</span>
-                    <span className="text-[11px] font-bold">{formatDate(task.due_date)}</span>
-                </div>
-            )}
         </div>
     )
 }

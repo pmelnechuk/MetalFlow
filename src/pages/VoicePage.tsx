@@ -22,13 +22,13 @@ export function VoicePage() {
                 setBars(prev => prev.map((_, i) => {
                     const center = NUM_BARS / 2
                     const distFromCenter = Math.abs(i - center) / center
-                    const maxHeight = 18 * (1 - distFromCenter * 0.4)
-                    return Math.floor(Math.random() * maxHeight) + 3
+                    const maxHeight = 24 * (1 - distFromCenter * 0.4)
+                    return Math.floor(Math.random() * maxHeight) + 4
                 }))
-            }, 120)
+            }, 100)
             return () => clearInterval(interval)
         } else {
-            setBars(Array(NUM_BARS).fill(3))
+            setBars(Array(NUM_BARS).fill(4))
         }
     }, [isRecording])
 
@@ -102,39 +102,40 @@ export function VoicePage() {
     }
 
     return (
-        <>
+        <div className="flex flex-col h-screen bg-slate-50">
             <TopBar
                 title="Grabación de Voz"
                 subtitle="Dictá una tarea o instrucción"
                 actions={
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center gap-1.5 px-3 py-2 border-[2px] border-black rounded-xl text-sm font-bold uppercase hover:bg-hc-surface transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 bg-white rounded-lg text-xs font-bold uppercase hover:bg-gray-50 text-gray-600 transition-all shadow-sm"
                     >
-                        <span className="material-symbols-outlined text-base">arrow_back</span>
+                        <span className="material-symbols-outlined text-sm">arrow_back</span>
                         Volver
                     </button>
                 }
             />
 
-            <main className="flex-1 flex flex-col items-center justify-center p-6 lg:p-8 max-w-2xl mx-auto w-full">
+            <main className="flex-1 flex flex-col items-center justify-center p-6 lg:p-8 max-w-2xl mx-auto w-full relative">
                 {/* Processing overlay */}
                 {isProcessing && (
-                    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-                        <div className="bg-white border-[3px] border-black rounded-2xl p-8 shadow-[6px_6px_0px_0px_#000000] text-center max-w-sm mx-4">
-                            <div className="w-16 h-16 mx-auto mb-4 bg-hc-accent rounded-2xl border-2 border-black flex items-center justify-center">
-                                <span className="material-symbols-outlined text-3xl text-white animate-spin">progress_activity</span>
+                    <div className="absolute inset-0 z-50 bg-white/80 backdrop-blur-md flex items-center justify-center rounded-2xl">
+                        <div className="text-center p-8">
+                            <div className="w-16 h-16 mx-auto mb-4 bg-navy-50 rounded-full flex items-center justify-center relative">
+                                <span className="material-symbols-outlined text-3xl text-navy-900 animate-spin">smart_toy</span>
+                                <div className="absolute inset-0 rounded-full border-2 border-navy-100 animate-ping opacity-20"></div>
                             </div>
-                            <h3 className="text-xl font-black uppercase text-black mb-2">Procesando con IA</h3>
-                            <p className="text-sm font-bold text-gray-500">
+                            <h3 className="text-lg font-bold uppercase text-navy-900 mb-2">Procesando con IA</h3>
+                            <p className="text-sm font-medium text-gray-500">
                                 Analizando audio con Gemini...
                             </p>
-                            <div className="mt-4 flex justify-center gap-1">
+                            <div className="mt-6 flex justify-center gap-1.5">
                                 {[0, 1, 2].map(i => (
                                     <div
                                         key={i}
-                                        className="w-2.5 h-2.5 bg-hc-accent rounded-full"
-                                        style={{ animation: `dotPulse 1s ease-in-out infinite ${i * 0.2}s` }}
+                                        className="w-2 h-2 bg-navy-900 rounded-full"
+                                        style={{ animation: `pulse 1s ease-in-out infinite ${i * 0.2}s` }}
                                     />
                                 ))}
                             </div>
@@ -142,17 +143,20 @@ export function VoicePage() {
                     </div>
                 )}
 
-                {/* Recording area */}
-                <div className="w-full bg-white border-[3px] border-black rounded-2xl p-8 lg:p-12 card-shadow flex flex-col items-center">
+                {/* Recording Interface */}
+                <div className="w-full bg-white border border-gray-200 rounded-2xl p-8 lg:p-12 shadow-md flex flex-col items-center relative overflow-hidden">
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#162F65_1px,transparent_1px)] [background-size:16px_16px]"></div>
+
                     {/* Error message */}
                     {error && (
-                        <div className="w-full mb-6 bg-red-50 border-[2px] border-red-400 rounded-xl p-3.5 flex items-start gap-3">
-                            <span className="material-symbols-outlined text-lg text-red-500 mt-0.5">error</span>
+                        <div className="w-full mb-8 bg-red-50 border border-red-100 rounded-lg p-3 flex items-start gap-3 relative z-10">
+                            <span className="material-symbols-outlined text-lg text-red-600 mt-0.5">error</span>
                             <div className="flex-1">
                                 <p className="text-sm font-bold text-red-700">{error}</p>
                                 <button
                                     onClick={() => setError(null)}
-                                    className="text-xs font-extrabold text-red-500 uppercase mt-1 hover:underline"
+                                    className="text-xs font-bold text-red-500 uppercase mt-1 hover:text-red-800 transition-colors"
                                 >
                                     Descartar
                                 </button>
@@ -160,53 +164,52 @@ export function VoicePage() {
                         </div>
                     )}
 
-                    {/* Concentric rings + button */}
-                    <div className="relative flex items-center justify-center mb-8">
-                        <div className={`absolute w-48 h-48 rounded-full transition-all duration-1000 ${isRecording ? 'border-[3px] border-hc-accent/30' : 'border-[2px] border-gray-100'
-                            }`}
-                            style={isRecording ? { animation: 'pulseRing 2s ease-in-out infinite' } : {}}
-                        />
-                        <div className={`absolute w-36 h-36 rounded-full transition-all duration-700 ${isRecording ? 'border-[3px] border-hc-highlight/60' : 'border-[2px] border-gray-50'
-                            }`}
-                            style={isRecording ? { animation: 'pulseRing 2s ease-in-out infinite 0.3s' } : {}}
-                        />
+                    {/* Button with Rings */}
+                    <div className="relative flex items-center justify-center mb-10 z-10">
+                        {/* Outer Rings */}
+                        <div className={`absolute w-64 h-64 rounded-full border border-navy-50 transition-all duration-1000 ${isRecording ? 'scale-110 opacity-100' : 'scale-75 opacity-0'}`} />
+                        <div className={`absolute w-48 h-48 rounded-full border border-navy-100 transition-all duration-1000 ${isRecording ? 'scale-100 opacity-100' : 'scale-90 opacity-0'}`} />
+
+                        {/* Pulse Ring */}
+                        {isRecording && (
+                            <div className="absolute w-32 h-32 bg-red-50 rounded-full animate-ping opacity-20"></div>
+                        )}
+
                         <button
                             onClick={isRecording ? stopRecording : startRecording}
                             disabled={isProcessing}
-                            className={`w-28 h-28 rounded-full flex items-center justify-center border-[4px] border-black transition-all duration-200 disabled:opacity-50 ${isRecording
-                                ? 'bg-red-500 shadow-[4px_4px_0px_0px_#000000] hover:bg-red-600'
-                                : 'bg-hc-accent shadow-[5px_5px_0px_0px_#000000] hover:bg-hc-accent-dark'
-                                } active:translate-y-[2px] active:shadow-none`}
-                            style={isRecording ? { animation: 'breathe 2s ease-in-out infinite' } : {}}
+                            className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl z-20 hover:scale-105 active:scale-95 border-4 ${isRecording
+                                ? 'bg-red-600 border-red-100 shadow-red-200'
+                                : 'bg-navy-900 border-navy-100 shadow-navy-200 hover:bg-navy-800'
+                                }`}
                         >
-                            <span className="material-symbols-outlined text-white icon-filled" style={{ fontSize: '3rem' }}>
+                            <span className="material-symbols-outlined text-white icon-filled" style={{ fontSize: '2.5rem' }}>
                                 {isRecording ? 'stop' : 'mic'}
                             </span>
                         </button>
                     </div>
 
-                    {/* Status */}
-                    <h2 className="text-xl font-black text-black uppercase mb-6 text-center">
+                    {/* Status Text */}
+                    <h2 className="text-lg font-bold text-navy-900 uppercase mb-8 text-center tracking-wide z-10">
                         {isRecording ? (
-                            <span className="flex items-center gap-2 text-red-500">
-                                <span className="w-2.5 h-2.5 bg-red-500 rounded-full" style={{ animation: 'dotPulse 1s ease-in-out infinite' }} />
+                            <span className="flex items-center gap-2 text-red-600 animate-pulse">
+                                <span className="w-2 h-2 bg-red-600 rounded-full" />
                                 Escuchando...
                             </span>
                         ) : 'Toque el micrófono para grabar'}
                     </h2>
 
-                    {/* Waveform */}
-                    <div aria-hidden="true" className="h-12 w-full max-w-md flex items-center justify-center gap-[2px] px-2 mb-6">
+                    {/* Waveform Visualization */}
+                    <div aria-hidden="true" className="h-16 w-full max-w-sm flex items-center justify-center gap-[3px] px-2 mb-8 z-10">
                         {bars.map((h, i) => (
                             <div
                                 key={i}
-                                className="waveform-bar rounded-full"
+                                className="rounded-full transition-all duration-100 ease-linear"
                                 style={{
-                                    height: `${h * 2.5}px`,
+                                    height: `${h * 2}px`,
                                     backgroundColor: isRecording
-                                        ? `hsl(220, ${70 + (i % 3) * 10}%, ${40 + (i % 5) * 5}%)`
-                                        : '#D1D5DB',
-                                    opacity: isRecording ? 0.85 + (i % 3) * 0.05 : 0.25,
+                                        ? `rgba(10, 25, 47, ${0.4 + (h / 24)})` // Dynamic opacity based on height
+                                        : '#E2E8F0',
                                     width: '4px',
                                 }}
                             />
@@ -214,32 +217,19 @@ export function VoicePage() {
                     </div>
 
                     {/* Timer */}
-                    <div className={`text-3xl font-black font-mono tracking-wider px-5 py-2 rounded-xl border-[2px] transition-colors ${isRecording ? 'text-red-500 border-red-300 bg-red-50' : 'text-gray-400 border-gray-200 bg-hc-surface'
+                    <div className={`text-2xl font-black font-mono tracking-widest px-6 py-2 rounded-lg border transition-colors z-10 ${isRecording ? 'text-red-600 border-red-100 bg-red-50' : 'text-gray-400 border-gray-100 bg-gray-50'
                         }`}>
                         {formatTime(seconds)}
                     </div>
                 </div>
 
-                {/* Action button below card */}
-                <div className="w-full mt-6 max-w-md">
-                    <button
-                        onClick={isRecording ? stopRecording : startRecording}
-                        disabled={isProcessing}
-                        className={`w-full py-4 border-[3px] border-black font-black text-xl uppercase rounded-xl shadow-[4px_4px_0px_0px_#000000] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${isRecording
-                            ? 'bg-red-500 text-white hover:bg-red-600'
-                            : 'bg-hc-accent text-white hover:bg-hc-accent-dark'
-                            }`}
-                    >
-                        <span className="material-symbols-outlined text-2xl icon-filled">
-                            {isRecording ? 'stop_circle' : 'mic'}
-                        </span>
-                        {isRecording ? 'Detener Grabación' : 'Iniciar Grabación'}
-                    </button>
-                    <p className="text-center mt-3 text-gray-400 font-bold text-xs uppercase tracking-wider">
-                        {isRecording ? 'Toque para finalizar y enviar a la IA' : 'Dicte una orden, tarea o instrucción'}
+                {/* Instructions */}
+                {!isRecording && !isProcessing && (
+                    <p className="text-center mt-6 text-gray-400 font-medium text-xs uppercase tracking-wider max-w-xs">
+                        Dicte una orden clara y concisa. La IA extraerá automáticamente la tarea y sus detalles.
                     </p>
-                </div>
+                )}
             </main>
-        </>
+        </div>
     )
 }

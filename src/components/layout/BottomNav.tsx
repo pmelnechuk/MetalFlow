@@ -13,7 +13,7 @@ export function BottomNav() {
     const navigate = useNavigate()
 
     return (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t-[3px] border-black">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             <div className="flex justify-around items-center h-16">
                 {tabs.map((tab) => {
                     const isActive = tab.path === '/'
@@ -25,11 +25,11 @@ export function BottomNav() {
                             onClick={() => navigate(tab.path)}
                             className={cn(
                                 'flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 relative',
-                                isActive ? 'text-hc-accent' : 'text-gray-400 hover:text-hc-accent'
+                                isActive ? 'text-navy-900 pt-1' : 'text-gray-400 hover:text-navy-900 pt-1'
                             )}
                         >
                             {isActive && (
-                                <div className="absolute top-0 left-1/4 right-1/4 h-[3px] bg-hc-accent rounded-b-full" />
+                                <div className="absolute top-0 left-0 right-0 h-[4px] bg-navy-900" />
                             )}
                             <span className={cn(
                                 'material-symbols-outlined text-[26px] mb-0.5',
@@ -38,8 +38,8 @@ export function BottomNav() {
                                 {tab.icon}
                             </span>
                             <span className={cn(
-                                'text-[10px] uppercase tracking-wider',
-                                isActive ? 'font-black' : 'font-semibold'
+                                'text-[10px] uppercase tracking-wide',
+                                isActive ? 'font-bold' : 'font-semibold'
                             )}>
                                 {tab.label}
                             </span>

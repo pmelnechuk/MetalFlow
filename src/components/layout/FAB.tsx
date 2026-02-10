@@ -9,9 +9,9 @@ export function FAB({ icon, label, onClick }: FABProps) {
         <button
             aria-label={label}
             onClick={onClick}
-            className="fab-button fixed right-6 bottom-24 sm:bottom-28 z-30 h-16 w-16 sm:h-[72px] sm:w-[72px] rounded-2xl bg-hc-accent border-[3px] border-black shadow-[4px_4px_0px_0px_#000000] flex items-center justify-center text-white"
+            className="fab-button fixed right-6 bottom-24 sm:bottom-28 z-30 h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-navy-900 shadow-lg flex items-center justify-center text-white hover:bg-navy-800 hover:shadow-xl hover:scale-105 active:scale-95 transition-all"
         >
-            <span className="material-symbols-outlined text-[36px] sm:text-[40px] font-bold icon-filled">{icon}</span>
+            <span className="material-symbols-outlined text-[28px] sm:text-[32px] icon-filled">{icon}</span>
         </button>
     )
 }

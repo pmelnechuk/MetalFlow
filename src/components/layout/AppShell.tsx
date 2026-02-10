@@ -7,7 +7,7 @@ export function AppShell() {
     const isVoicePage = location.pathname.startsWith('/voz')
 
     return (
-        <div className="bg-hc-surface text-hc-text font-display min-h-screen flex">
+        <div className="bg-hc-bg text-hc-text font-display min-h-screen flex selection:bg-navy-900 selection:text-white">
             {/* Desktop sidebar */}
             <Sidebar />
 
