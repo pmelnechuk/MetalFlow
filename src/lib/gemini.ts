@@ -14,12 +14,15 @@ export interface AITaskExtraction {
 
 const SYSTEM_PROMPT = `Sos un asistente de taller metalúrgico. Extraé datos del audio en JSON:
 {"project":"CLIENTE","task":"TAREA","priority":"alta|media|baja","due_date":"YYYY-MM-DD|null","confidence":0.0-1.0}
-Reglas: urgente→alta, sin mención→media, "para hoy"→fecha de hoy, solo JSON.`
+Reglas: urgente→alta, sin mención→media, "para hoy"→fecha de hoy, solo JSON.
+RESPOND ONLY WITH RAW JSON. DO NOT USE MARKDOWN. START WITH '{'. DO NOT SAY "HERE IS THE JSON".`
 
 /**
  * Calls Gemini with retry on 429/503, and model fallback.
  */
 async function callGemini(body: object): Promise<any> {
+    let lastError = ''
+
     for (const model of MODELS) {
         const url = `${BASE_URL}/${model}:generateContent?key=${GEMINI_API_KEY}`
 
@@ -32,9 +35,11 @@ async function callGemini(body: object): Promise<any> {
                 })
 
                 if (res.ok) {
-                    console.log(`[Gemini] OK con ${model}`)
+                    console.log(`[Gemini] ✓ Respuesta OK de ${model}`)
                     return res.json()
                 }
+
+                lastError = `${model}: ${res.status}`
 
                 if ((res.status === 429 || res.status === 503) && attempt === 0) {
                     console.warn(`[Gemini] ${model} → ${res.status}, reintentando en 3s...`)
@@ -44,11 +49,8 @@ async function callGemini(body: object): Promise<any> {
 
                 if (res.status === 404 || res.status === 503) {
                     console.warn(`[Gemini] ${model} → ${res.status}, probando siguiente modelo...`)
-                    break // try next model
+                    break
                 }
-
-                const errText = await res.text().catch(() => '')
-                console.error(`[Gemini] ${model} ${res.status}:`, errText)
 
                 if (res.status === 429) {
                     throw new Error('Límite de uso alcanzado. Esperá unos segundos e intentá de nuevo.')
@@ -56,24 +58,67 @@ async function callGemini(body: object): Promise<any> {
                 throw new Error(`Error de Gemini (${res.status})`)
             } catch (e: any) {
                 if (e.message?.includes('Límite') || e.message?.includes('Error de Gemini')) throw e
-                console.error(`[Gemini] ${model} network error:`, e)
-                break // try next model
+                console.error(`[Gemini] ${model} error de red:`, e)
+                lastError = `${model}: ${e.message}`
+                break
             }
         }
     }
-    throw new Error('No se pudo conectar con ningún modelo de Gemini. Intentá de nuevo.')
+    throw new Error(`No se pudo conectar con Gemini (${lastError}). Intentá de nuevo.`)
+}
+
+/**
+ * Extract text from Gemini response, handling "thinking" models
+ * that return thought parts before the actual response.
+ */
+function extractText(data: any): string {
+    const candidates = data?.candidates
+    if (!candidates?.length) {
+        console.error('[Gemini] No candidates in response:', JSON.stringify(data).slice(0, 500))
+        throw new Error('Sin respuesta de la IA')
+    }
+
+    const parts = candidates[0]?.content?.parts
+    if (!parts?.length) {
+        console.error('[Gemini] No parts in candidate:', JSON.stringify(candidates[0]).slice(0, 500))
+        throw new Error('Respuesta vacía de la IA')
+    }
+
+    console.log(`[Gemini] ${parts.length} part(s) en la respuesta`)
+
+    // Extract valid text from ALL non-thought parts
+    const textParts = parts
+        .filter((part: any) => !part.thought && part.text)
+        .map((part: any) => part.text)
+
+    if (textParts.length > 0) {
+        return textParts.join('').trim()
+    }
+
+    // Fallback: try any part with text (even thought parts)
+    for (const part of parts) {
+        if (part.text?.includes('{')) return part.text
+    }
+
+    console.error('[Gemini] No text found in parts:', JSON.stringify(parts).slice(0, 500))
+    throw new Error('No se encontró texto en la respuesta de la IA')
 }
 
 function parseResult(data: any): AITaskExtraction {
-    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text
-    if (!raw) throw new Error('Sin respuesta de la IA')
+    const raw = extractText(data)
+    console.log('[Gemini raw response]', raw)
 
-    console.log('[Gemini raw]', raw)
+    // Extract JSON object: find first '{' and last '}'
+    const firstOpen = raw.indexOf('{')
+    const lastClose = raw.lastIndexOf('}')
 
-    let text = raw.trim()
-    text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
-
-    if (!text.endsWith('}')) text += '"}'
+    let text = ''
+    if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
+        text = raw.substring(firstOpen, lastClose + 1)
+    } else {
+        // Fallback: cleanup markdown if no clear JSON object found (unlikely)
+        text = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
+    }
 
     try {
         const parsed = JSON.parse(text)
@@ -85,7 +130,8 @@ function parseResult(data: any): AITaskExtraction {
             confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.5,
         }
     } catch (e) {
-        console.error('[Gemini parse error]', e, 'Raw:', raw)
+        console.error('[Gemini parse error]', e, 'Text:', text)
+        // Regex fallback
         const project = raw.match(/"project"\s*:\s*"([^"]*)"/)?.[1] || 'SIN PROYECTO'
         const task = raw.match(/"task"\s*:\s*"([^"]*)"/)?.[1] || 'TAREA SIN NOMBRE'
         const priority = raw.match(/"priority"\s*:\s*"([^"]*)"/)?.[1] || 'media'
@@ -115,7 +161,7 @@ export async function extractTaskFromAudio(audioBlob: Blob): Promise<AITaskExtra
                 { text: `Fecha de hoy: ${today}. Extraé la tarea del audio.` },
             ],
         }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 200, responseMimeType: 'application/json' },
+        generationConfig: { temperature: 0.1, maxOutputTokens: 1024, responseMimeType: 'application/json' },
     })
 
     return parseResult(data)
@@ -129,7 +175,7 @@ export async function extractTaskFromText(text: string): Promise<AITaskExtractio
     const data = await callGemini({
         system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: [{ parts: [{ text: `Fecha: ${today}. Texto: "${text}"` }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 200, responseMimeType: 'application/json' },
+        generationConfig: { temperature: 0.1, maxOutputTokens: 1024, responseMimeType: 'application/json' },
     })
 
     return parseResult(data)
