@@ -32,6 +32,7 @@ export function useTasks() {
         priority?: TaskPriority
         status?: TaskStatus
         due_date?: string
+        assigned_to?: string[]
     }) => {
         const targetStatus = task.status || 'backlog'
         const maxPos = tasks
@@ -49,6 +50,7 @@ export function useTasks() {
                 position: maxPos + 1,
                 due_date: task.due_date || null,
                 progress: 0,
+                assigned_to: task.assigned_to || [],
             })
             .select('*, project:projects(*)')
             .single()
@@ -70,6 +72,7 @@ export function useTasks() {
         position?: number
         due_date?: string | null
         progress?: number
+        assigned_to?: string[] | null
     }) => {
         const { error } = await supabase
             .from('tasks')

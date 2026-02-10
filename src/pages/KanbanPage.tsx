@@ -3,6 +3,7 @@ import { DndContext, PointerSensor, useSensor, useSensors, DragOverlay } from '@
 import { useTasks } from '../hooks/useTasks'
 import { useRealtimeTasks } from '../hooks/useRealtimeTasks'
 import { TaskCard } from '../components/kanban/TaskCard'
+import { TaskDetailModal } from '../components/kanban/TaskDetailModal'
 import { TopBar } from '../components/layout/TopBar'
 import type { Task, TaskStatus, TaskPriority } from '../types/database'
 import { useProjects } from '../hooks/useProjects'
@@ -19,7 +20,7 @@ const STATUS_COLORS: Record<TaskStatus, { bg: string; text: string; iconBg: stri
     terminado: { bg: 'bg-green-50', text: 'text-green-600', iconBg: 'bg-green-100' },
 }
 
-function KanbanColumn({ status, tasks, onMenuClick }: { status: TaskStatus; tasks: Task[]; onMenuClick: (t: Task) => void }) {
+function KanbanColumn({ status, tasks, onMenuClick, onTaskClick }: { status: TaskStatus; tasks: Task[]; onMenuClick: (t: Task) => void; onTaskClick: (t: Task) => void }) {
     const { setNodeRef, isOver } = useDroppable({ id: status })
     const colors = STATUS_COLORS[status]
 
@@ -58,7 +59,7 @@ function KanbanColumn({ status, tasks, onMenuClick }: { status: TaskStatus; task
                     </div>
                 ) : (
                     tasks.map((task) => (
-                        <TaskCard key={task.id} task={task} onMenuClick={onMenuClick} />
+                        <TaskCard key={task.id} task={task} onMenuClick={onMenuClick} onTaskClick={onTaskClick} />
                     ))
                 )}
             </div>
@@ -72,11 +73,15 @@ export function KanbanPage() {
     const navigate = useNavigate()
     const [activeTask, setActiveTask] = useState<Task | null>(null)
     const [menuTask, setMenuTask] = useState<Task | null>(null)
+    const [detailTask, setDetailTask] = useState<Task | null>(null)
     const [showCreateForm, setShowCreateForm] = useState(false)
     const [newTaskTitle, setNewTaskTitle] = useState('')
+    const [newTaskDescription, setNewTaskDescription] = useState('')
     const [newTaskProjectId, setNewTaskProjectId] = useState('')
     const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('media')
     const [newTaskDueDate, setNewTaskDueDate] = useState('')
+    const [newTaskEmployees, setNewTaskEmployees] = useState<string[]>([])
+    const [employeeInput, setEmployeeInput] = useState('')
     const [projectsList, setProjectsList] = useState<{ id: string; name: string; client: string }[]>([])
 
     useRealtimeTasks(useCallback(() => { refetch() }, [refetch]))
@@ -112,14 +117,19 @@ export function KanbanPage() {
         if (!newTaskTitle.trim()) return
         await createTask({
             title: newTaskTitle,
+            description: newTaskDescription || undefined,
             project_id: newTaskProjectId || undefined,
             priority: newTaskPriority,
             due_date: newTaskDueDate || undefined,
+            assigned_to: newTaskEmployees.length > 0 ? newTaskEmployees : undefined,
         })
         setNewTaskTitle('')
+        setNewTaskDescription('')
         setNewTaskProjectId('')
         setNewTaskPriority('media')
         setNewTaskDueDate('')
+        setNewTaskEmployees([])
+        setEmployeeInput('')
         setShowCreateForm(false)
     }
 
@@ -131,6 +141,14 @@ export function KanbanPage() {
     const handleDeleteTask = async (taskId: string) => {
         await deleteTask(taskId)
         setMenuTask(null)
+    }
+
+    const handleSaveDetail = async (id: string, updates: Record<string, unknown>) => {
+        await updateTask(id, updates as any)
+    }
+
+    const handleDeleteDetail = async (id: string) => {
+        await deleteTask(id)
     }
 
     return (
@@ -178,6 +196,7 @@ export function KanbanPage() {
                                     status={status}
                                     tasks={getTasksByStatus(status)}
                                     onMenuClick={(task) => setMenuTask(task)}
+                                    onTaskClick={(task) => setDetailTask(task)}
                                 />
                             ))}
                         </div>
@@ -295,6 +314,16 @@ export function KanbanPage() {
                                 />
                             </div>
                             <div>
+                                <label className="text-xs font-extrabold uppercase text-hc-accent block mb-1.5 border-l-[3px] border-hc-accent pl-2">Descripción</label>
+                                <textarea
+                                    value={newTaskDescription}
+                                    onChange={(e) => setNewTaskDescription(e.target.value)}
+                                    placeholder="Detalle de la tarea..."
+                                    rows={2}
+                                    className="block w-full px-3.5 py-3 border-[2px] border-black rounded-xl bg-white text-sm font-bold text-black placeholder-gray-400 focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors resize-none"
+                                />
+                            </div>
+                            <div>
                                 <label className="text-xs font-extrabold uppercase text-hc-accent block mb-1.5 border-l-[3px] border-hc-accent pl-2">Proyecto</label>
                                 <select value={newTaskProjectId} onChange={(e) => setNewTaskProjectId(e.target.value)}
                                     className="block w-full px-3.5 py-3 border-[2px] border-black rounded-xl bg-white text-sm font-bold text-black focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
@@ -304,6 +333,30 @@ export function KanbanPage() {
                                         <option key={p.id} value={p.id}>{p.client} — {p.name}</option>
                                     ))}
                                 </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-extrabold uppercase text-hc-accent block mb-1.5 border-l-[3px] border-hc-accent pl-2">Empleados Responsables</label>
+                                <div className="flex flex-wrap gap-1.5 mb-2">
+                                    {newTaskEmployees.map((emp, i) => (
+                                        <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-hc-accent-light border-[2px] border-hc-accent rounded-lg text-xs font-extrabold text-hc-accent-dark uppercase">
+                                            {emp}
+                                            <button onClick={() => setNewTaskEmployees(prev => prev.filter((_, j) => j !== i))} className="hover:text-red-500 transition-colors">×</button>
+                                        </span>
+                                    ))}
+                                </div>
+                                <input
+                                    type="text" value={employeeInput}
+                                    onChange={(e) => setEmployeeInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if ((e.key === 'Enter' || e.key === ',') && employeeInput.trim()) {
+                                            e.preventDefault()
+                                            setNewTaskEmployees(prev => [...prev, employeeInput.trim()])
+                                            setEmployeeInput('')
+                                        }
+                                    }}
+                                    placeholder="Nombre + Enter para agregar"
+                                    className="block w-full px-3.5 py-3 border-[2px] border-black rounded-xl bg-white text-sm font-bold text-black placeholder-gray-400 focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
+                                />
                             </div>
                             <div className="flex gap-3">
                                 <div className="flex-1">
@@ -333,6 +386,17 @@ export function KanbanPage() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Task Detail Modal */}
+            {detailTask && (
+                <TaskDetailModal
+                    task={detailTask}
+                    projects={projectsList}
+                    onSave={handleSaveDetail}
+                    onDelete={handleDeleteDetail}
+                    onClose={() => setDetailTask(null)}
+                />
             )}
         </>
     )

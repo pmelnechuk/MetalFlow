@@ -5,9 +5,10 @@ import { useDraggable } from '@dnd-kit/core'
 interface TaskCardProps {
     task: Task
     onMenuClick?: (task: Task) => void
+    onTaskClick?: (task: Task) => void
 }
 
-export function TaskCard({ task, onMenuClick }: TaskCardProps) {
+export function TaskCard({ task, onMenuClick, onTaskClick }: TaskCardProps) {
     const priority = task.priority || 'media'
     const progress = task.progress || 0
     const isCompleted = task.status === 'terminado'
@@ -29,6 +30,7 @@ export function TaskCard({ task, onMenuClick }: TaskCardProps) {
             {...listeners}
             {...attributes}
             style={style as any}
+            onClick={() => onTaskClick?.(task)}
             className={`group border-[2px] border-black rounded-xl p-3.5 relative transition-all cursor-grab active:cursor-grabbing ${isDragging
                 ? 'shadow-[6px_6px_0px_0px_#000000] scale-[1.02] opacity-90 rotate-1'
                 : isCompleted
@@ -68,9 +70,28 @@ export function TaskCard({ task, onMenuClick }: TaskCardProps) {
             <h3 className={`text-sm font-black text-black leading-tight mb-0.5 ${isCompleted ? 'line-through text-gray-500' : ''}`}>
                 {task.project?.client || 'Sin cliente'}
             </h3>
-            <p className={`text-xs font-semibold mb-2 ${isCompleted ? 'line-through text-gray-400' : 'text-gray-500'}`}>
+            <p className={`text-xs font-semibold mb-1 ${isCompleted ? 'line-through text-gray-400' : 'text-gray-500'}`}>
                 {task.title}
             </p>
+
+            {/* Description preview */}
+            {!isCompleted && task.description && (
+                <p className="text-[11px] text-gray-400 font-medium leading-snug mb-1.5 line-clamp-2">
+                    {task.description}
+                </p>
+            )}
+
+            {/* Assigned employees */}
+            {!isCompleted && task.assigned_to && task.assigned_to.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1.5">
+                    {task.assigned_to.map((emp, i) => (
+                        <span key={i} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-hc-accent-light rounded text-[10px] font-extrabold text-hc-accent-dark uppercase">
+                            <span className="material-symbols-outlined" style={{ fontSize: '10px' }}>person</span>
+                            {emp}
+                        </span>
+                    ))}
+                </div>
+            )}
 
             {/* Progress */}
             {isInProgress && (

@@ -7,10 +7,11 @@ import { TopBar } from '../components/layout/TopBar'
 import { cn } from '../lib/utils'
 
 export function ProjectsPage() {
-    const { projects, loading, filter, setFilter, createProject, updateProject, searchProjects, refetch } = useProjects()
+    const { projects, loading, filter, setFilter, createProject, updateProject, deleteProject, searchProjects, refetch } = useProjects()
     const [showForm, setShowForm] = useState(false)
     const [editingProject, setEditingProject] = useState<{ id: string; name: string; client: string } | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
+    const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
     useRealtimeTasks(useCallback(() => { refetch() }, [refetch]))
 
@@ -29,6 +30,12 @@ export function ProjectsPage() {
             await updateProject(editingProject.id, data)
             setEditingProject(null)
         }
+    }
+
+    const handleDelete = async (id: string) => {
+        await deleteProject(id)
+        setConfirmDelete(null)
+        setEditingProject(null)
     }
 
     return (
@@ -165,6 +172,35 @@ export function ProjectsPage() {
                             onSubmit={editingProject ? handleEdit : handleCreate}
                             onCancel={() => { setShowForm(false); setEditingProject(null) }}
                         />
+                        {editingProject && (
+                            <div className="mt-4 pt-4 border-t-[2px] border-gray-200">
+                                {confirmDelete === editingProject.id ? (
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-xs font-bold text-red-600 flex-1">¿Eliminar este proyecto?</p>
+                                        <button
+                                            onClick={() => handleDelete(editingProject.id)}
+                                            className="px-4 py-2 border-[2px] border-red-500 bg-red-500 text-white font-bold text-xs uppercase rounded-xl hover:bg-red-600 transition-colors"
+                                        >
+                                            Sí, eliminar
+                                        </button>
+                                        <button
+                                            onClick={() => setConfirmDelete(null)}
+                                            className="px-4 py-2 border-[2px] border-black bg-white text-black font-bold text-xs uppercase rounded-xl hover:bg-gray-50 transition-colors"
+                                        >
+                                            No
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setConfirmDelete(editingProject.id)}
+                                        className="w-full py-3 px-3 border-[2px] border-red-500 bg-red-50 text-red-700 font-bold text-sm uppercase rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-1.5"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">delete</span>
+                                        Eliminar Proyecto
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

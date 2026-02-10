@@ -60,8 +60,10 @@ export function VoicePage() {
                             mockData: {
                                 project: result.project,
                                 task: result.task,
+                                description: result.description || '',
                                 priority: result.priority,
                                 due_date: result.due_date || new Date().toISOString().split('T')[0],
+                                assigned_to: result.assigned_to || [],
                             },
                         },
                     })
@@ -172,8 +174,8 @@ export function VoicePage() {
                             onClick={isRecording ? stopRecording : startRecording}
                             disabled={isProcessing}
                             className={`w-28 h-28 rounded-full flex items-center justify-center border-[4px] border-black transition-all duration-200 disabled:opacity-50 ${isRecording
-                                    ? 'bg-red-500 shadow-[4px_4px_0px_0px_#000000] hover:bg-red-600'
-                                    : 'bg-hc-accent shadow-[5px_5px_0px_0px_#000000] hover:bg-hc-accent-dark'
+                                ? 'bg-red-500 shadow-[4px_4px_0px_0px_#000000] hover:bg-red-600'
+                                : 'bg-hc-accent shadow-[5px_5px_0px_0px_#000000] hover:bg-hc-accent-dark'
                                 } active:translate-y-[2px] active:shadow-none`}
                             style={isRecording ? { animation: 'breathe 2s ease-in-out infinite' } : {}}
                         >
@@ -224,8 +226,8 @@ export function VoicePage() {
                         onClick={isRecording ? stopRecording : startRecording}
                         disabled={isProcessing}
                         className={`w-full py-4 border-[3px] border-black font-black text-xl uppercase rounded-xl shadow-[4px_4px_0px_0px_#000000] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${isRecording
-                                ? 'bg-red-500 text-white hover:bg-red-600'
-                                : 'bg-hc-accent text-white hover:bg-hc-accent-dark'
+                            ? 'bg-red-500 text-white hover:bg-red-600'
+                            : 'bg-hc-accent text-white hover:bg-hc-accent-dark'
                             }`}
                     >
                         <span className="material-symbols-outlined text-2xl icon-filled">

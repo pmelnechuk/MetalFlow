@@ -41,6 +41,7 @@ export type Database = {
             }
             tasks: {
                 Row: {
+                    assigned_to: string[] | null
                     created_at: string | null
                     description: string | null
                     due_date: string | null
@@ -50,10 +51,12 @@ export type Database = {
                     progress: number | null
                     project_id: string | null
                     status: Database["public"]["Enums"]["task_status"] | null
+                    status_changed_at: string | null
                     title: string
                     updated_at: string | null
                 }
                 Insert: {
+                    assigned_to?: string[] | null
                     created_at?: string | null
                     description?: string | null
                     due_date?: string | null
@@ -67,6 +70,7 @@ export type Database = {
                     updated_at?: string | null
                 }
                 Update: {
+                    assigned_to?: string[] | null
                     created_at?: string | null
                     description?: string | null
                     due_date?: string | null

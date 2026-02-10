@@ -7,15 +7,17 @@ const BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 export interface AITaskExtraction {
     project: string
     task: string
+    description: string
     priority: TaskPriority
     due_date: string | null
+    assigned_to: string[]
     confidence: number
 }
 
-const SYSTEM_PROMPT = `Sos un asistente de taller metalúrgico. Extraé datos del audio en JSON:
-{"project":"CLIENTE","task":"TAREA","priority":"alta|media|baja","due_date":"YYYY-MM-DD|null","confidence":0.0-1.0}
-Reglas: urgente→alta, sin mención→media, "para hoy"→fecha de hoy, solo JSON.
-RESPOND ONLY WITH RAW JSON. DO NOT USE MARKDOWN. START WITH '{'. DO NOT SAY "HERE IS THE JSON".`
+const SYSTEM_PROMPT = `Sos un asistente de taller metalúrgico. Extraé datos del audio y devolvé SOLO JSON:
+{"project":"CLIENTE","task":"TÍTULO CORTO","description":"DESCRIPCIÓN DETALLADA","priority":"alta|media|baja","due_date":"YYYY-MM-DD|null","assigned_to":["NOMBRE1","NOMBRE2"],"confidence":0.0-1.0}
+Reglas: urgente→alta, sin mención→media, "para hoy"→fecha de hoy. Si no menciona empleados→array vacío. description=detalle de qué hacer.
+RESPOND ONLY WITH RAW JSON. START WITH '{'. NO MARKDOWN. NO CONVERSATIONAL TEXT.`
 
 /**
  * Calls Gemini with retry on 429/503, and model fallback.
@@ -125,8 +127,10 @@ function parseResult(data: any): AITaskExtraction {
         return {
             project: parsed.project || 'SIN PROYECTO',
             task: parsed.task || 'TAREA SIN NOMBRE',
+            description: parsed.description || '',
             priority: (['alta', 'media', 'baja'].includes(parsed.priority) ? parsed.priority : 'media') as TaskPriority,
             due_date: parsed.due_date || null,
+            assigned_to: Array.isArray(parsed.assigned_to) ? parsed.assigned_to : [],
             confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.5,
         }
     } catch (e) {
@@ -134,14 +138,17 @@ function parseResult(data: any): AITaskExtraction {
         // Regex fallback
         const project = raw.match(/"project"\s*:\s*"([^"]*)"/)?.[1] || 'SIN PROYECTO'
         const task = raw.match(/"task"\s*:\s*"([^"]*)"/)?.[1] || 'TAREA SIN NOMBRE'
+        const description = raw.match(/"description"\s*:\s*"([^"]*)"/)?.[1] || ''
         const priority = raw.match(/"priority"\s*:\s*"([^"]*)"/)?.[1] || 'media'
         const dueDate = raw.match(/"due_date"\s*:\s*"(\d{4}-\d{2}-\d{2})"/)?.[1] || null
         const conf = raw.match(/"confidence"\s*:\s*([\d.]+)/)?.[1]
         return {
             project,
             task,
+            description,
             priority: (['alta', 'media', 'baja'].includes(priority) ? priority : 'media') as TaskPriority,
             due_date: dueDate,
+            assigned_to: [],
             confidence: conf ? parseFloat(conf) : 0.5,
         }
     }

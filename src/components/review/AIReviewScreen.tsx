@@ -24,8 +24,11 @@ export function AIReviewScreen() {
 
     const [project, setProject] = useState(mockData.project)
     const [task, setTask] = useState(mockData.task)
+    const [description, setDescription] = useState(mockData.description || '')
     const [priority, setPriority] = useState<TaskPriority>(mockData.priority)
     const [dueDate, setDueDate] = useState(mockData.due_date || '')
+    const [employees, setEmployees] = useState<string[]>(mockData.assigned_to || [])
+    const [employeeInput, setEmployeeInput] = useState('')
     const [projectsList, setProjectsList] = useState<{ id: string; name: string; client: string }[]>([])
     const [matchedProjectId, setMatchedProjectId] = useState<string | null>(null)
 
@@ -45,10 +48,12 @@ export function AIReviewScreen() {
         setSaving(true)
         await createTask({
             title: task,
+            description: description || undefined,
             project_id: matchedProjectId || undefined,
             priority,
             due_date: dueDate || undefined,
             status: 'backlog',
+            assigned_to: employees.length > 0 ? employees : undefined,
         })
         setSaving(false)
         navigate('/tablero')
@@ -145,6 +150,48 @@ export function AIReviewScreen() {
                                 type="text" value={task}
                                 onChange={(e) => setTask(e.target.value)}
                                 className="w-full px-3.5 py-3 border-[2px] border-black rounded-xl text-base font-black text-black uppercase bg-white focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
+                            />
+                        </div>
+
+                        {/* Descripción */}
+                        <div>
+                            <label className="text-xs font-extrabold text-hc-accent uppercase tracking-wider block mb-1.5 border-l-[3px] border-hc-accent pl-2">
+                                Descripción
+                            </label>
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Detalle de la tarea..."
+                                rows={2}
+                                className="w-full px-3.5 py-3 border-[2px] border-black rounded-xl text-sm font-bold text-black bg-white focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors resize-none"
+                            />
+                        </div>
+
+                        {/* Empleados Responsables */}
+                        <div>
+                            <label className="text-xs font-extrabold text-hc-accent uppercase tracking-wider block mb-1.5 border-l-[3px] border-hc-accent pl-2">
+                                Empleados Responsables
+                            </label>
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                                {employees.map((emp, i) => (
+                                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-hc-accent-light border-[2px] border-hc-accent rounded-lg text-xs font-extrabold text-hc-accent-dark uppercase">
+                                        {emp}
+                                        <button onClick={() => setEmployees(prev => prev.filter((_, j) => j !== i))} className="hover:text-red-500 transition-colors">×</button>
+                                    </span>
+                                ))}
+                            </div>
+                            <input
+                                type="text" value={employeeInput}
+                                onChange={(e) => setEmployeeInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if ((e.key === 'Enter' || e.key === ',') && employeeInput.trim()) {
+                                        e.preventDefault()
+                                        setEmployees(prev => [...prev, employeeInput.trim()])
+                                        setEmployeeInput('')
+                                    }
+                                }}
+                                placeholder="Nombre + Enter para agregar"
+                                className="w-full px-3.5 py-3 border-[2px] border-black rounded-xl text-sm font-bold text-black bg-white placeholder-gray-400 focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
                             />
                         </div>
 
