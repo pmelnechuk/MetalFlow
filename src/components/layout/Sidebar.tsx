@@ -14,7 +14,7 @@ export function Sidebar() {
     const navigate = useNavigate()
 
     return (
-        <aside className="hidden md:flex flex-col w-[240px] lg:w-[260px] bg-white border-r border-gray-200 h-screen sticky top-0 shrink-0 shadow-[1px_0_3px_0_rgba(0,0,0,0.05)]">
+        <aside className="hidden md:flex flex-col w-[240px] lg:w-[260px] bg-white border-r border-gray-200 h-screen sticky top-0 shrink-0 shadow-xl z-20">
             {/* Brand */}
             <div className="px-6 py-6 border-b border-gray-100">
                 <div className="flex items-center gap-3">
@@ -39,22 +39,22 @@ export function Sidebar() {
                             key={item.path}
                             onClick={() => navigate(item.path)}
                             className={cn(
-                                'w-full flex items-center gap-3 px-4 py-3 rounded-md font-medium text-base transition-all group relative',
+                                'w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-base transition-all group relative my-1',
                                 isActive
-                                    ? 'text-navy-900 bg-blue-50/50'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-navy-900'
+                                    ? 'text-navy-900 bg-blue-50 font-bold shadow-sm'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-navy-900 hover:shadow-sm'
                             )}
                         >
                             {isActive && (
-                                <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] bg-navy-900 rounded-r-md" />
+                                <div className="absolute left-0 top-2 bottom-2 w-[4px] bg-navy-900 rounded-r-full" />
                             )}
                             <span className={cn(
-                                'material-symbols-outlined text-[22px]',
-                                isActive && 'icon-filled'
+                                'material-symbols-outlined text-[24px] transition-transform group-hover:scale-110',
+                                isActive && 'icon-filled text-navy-900'
                             )}>
                                 {item.icon}
                             </span>
-                            <span className={cn("text-sm uppercase tracking-wide", isActive ? "font-bold" : "font-medium")}>{item.label}</span>
+                            <span className="text-sm uppercase tracking-wide">{item.label}</span>
                         </button>
                     )
                 })}

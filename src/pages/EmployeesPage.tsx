@@ -82,7 +82,7 @@ export function EmployeesPage() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {employees.map((employee) => (
-                            <div key={employee.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative group">
+                            <div key={employee.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 relative group">
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="w-10 h-10 rounded-full bg-navy-50 flex items-center justify-center text-navy-700 font-bold text-lg">
                                         {employee.first_name[0]}{employee.last_name[0]}

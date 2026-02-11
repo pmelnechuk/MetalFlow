@@ -27,9 +27,9 @@ function KanbanColumn({ status, tasks, onMenuClick, onTaskClick }: { status: Tas
     const colors = STATUS_COLORS[status]
 
     return (
-        <div className="flex flex-col min-w-[280px] lg:min-w-[300px] max-w-[340px] w-full shrink-0">
+        <div className="flex flex-col min-w-[300px] lg:min-w-[320px] max-w-[360px] w-full shrink-0 h-full">
             {/* Column header */}
-            <div className={`flex items-center gap-3 px-4 py-3 rounded-t-lg border-b-2 ${colors.border} ${colors.bg} mb-0 sticky top-0 z-10`}>
+            <div className={`flex items-center gap-3 px-4 py-3.5 rounded-t-xl border-b-[3px] ${colors.border} ${colors.bg} mb-0 sticky top-0 z-10 shadow-sm transition-colors hover:shadow-md`}>
                 <div className={`w-6 h-6 rounded-md ${colors.iconBg} flex items-center justify-center shadow-sm`}>
                     <span className={`material-symbols-outlined text-base icon-filled ${colors.text}`}>
                         {getStatusIcon(status)}
@@ -47,14 +47,14 @@ function KanbanColumn({ status, tasks, onMenuClick, onTaskClick }: { status: Tas
             <div
                 ref={setNodeRef}
                 className={cn(
-                    'flex-1 space-y-3 p-3 bg-slate-50/50 rounded-b-lg border-x border-b border-gray-100 min-h-[200px]',
-                    isOver ? 'bg-blue-50/50 ring-2 ring-royal-blue ring-inset' : ''
+                    'flex-1 space-y-3 p-3 bg-gray-50/80 rounded-b-xl border-x border-b border-gray-200 min-h-[150px] transition-colors overflow-y-auto custom-scrollbar',
+                    isOver ? 'bg-blue-50/80 ring-2 ring-royal-blue ring-inset' : ''
                 )}
             >
                 {tasks.length === 0 ? (
                     <div className={cn(
-                        'text-center py-12 border-2 border-dashed rounded-lg transition-colors',
-                        isOver ? 'border-royal-blue bg-blue-50/50' : 'border-slate-200'
+                        'text-center py-12 border-2 border-dashed rounded-xl transition-all',
+                        isOver ? 'border-royal-blue bg-blue-50/30' : 'border-gray-200 hover:border-gray-300'
                     )}>
                         <span className="material-symbols-outlined text-2xl text-slate-300 mb-2">inbox</span>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Vacío</p>
@@ -189,7 +189,7 @@ export function KanbanPage() {
                 }
             />
 
-            <main className="flex-1 overflow-x-auto overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8">
+            <main className="flex-1 overflow-x-auto overflow-y-hidden p-6 lg:p-8 pb-4 bg-gray-100/50">
                 {loading ? (
                     <div className="flex gap-4">
                         {[1, 2, 3, 4].map(i => (

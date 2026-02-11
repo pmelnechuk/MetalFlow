@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useEmployees } from '../../hooks/useEmployees'
 import { useProjects } from '../../hooks/useProjects'
+import { VoiceRecorderButton } from '../ui/VoiceRecorderButton'
+import type { AITaskExtraction } from '../../lib/gemini'
 
 interface ProjectFormProps {
     onSubmit: (data: { name: string; client: string; employeeIds: string[] }) => void
@@ -24,6 +26,23 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
         }
     }, [initialData?.id, getProjectEmployees])
 
+    const handleVoiceProcessed = (data: AITaskExtraction) => {
+        if (data.task) setName(data.task) // Map task title to Project Name
+        if (data.project) setClient(data.project) // Map project to Client
+
+        if (data.assigned_to && data.assigned_to.length > 0) {
+            // Find employee IDs by name match
+            const matchedIds = employees
+                .filter(e => data.assigned_to.some(name =>
+                    `${e.first_name} ${e.last_name}`.toLowerCase().includes(name.toLowerCase()) ||
+                    name.toLowerCase().includes(e.first_name.toLowerCase())
+                ))
+                .map(e => e.id)
+
+            setSelectedEmployees(prev => Array.from(new Set([...prev, ...matchedIds])))
+        }
+    }
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (!name.trim() || !client.trim()) return
@@ -45,8 +64,9 @@ export function ProjectForm({ onSubmit, onCancel, initialData }: ProjectFormProp
     return (
         <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
             <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50 shrink-0">
-                <h2 className="text-lg font-bold text-navy-900 uppercase tracking-tight">
+                <h2 className="text-lg font-bold text-navy-900 uppercase tracking-tight flex items-center gap-2">
                     {initialData ? 'Editar Proyecto' : 'Nuevo Proyecto'}
+                    <VoiceRecorderButton onProcessed={handleVoiceProcessed} size="sm" />
                 </h2>
                 <button
                     onClick={onCancel}

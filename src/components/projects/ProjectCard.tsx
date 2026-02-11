@@ -14,7 +14,7 @@ export function ProjectCard({ project, taskCount, highPriority, onPress }: Proje
     return (
         <div
             onClick={onPress}
-            className={`group bg-white rounded-lg border border-gray-200 p-5 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden ${isPaused ? 'opacity-70 bg-gray-50' : 'hover:border-navy-300'
+            className={`group bg-white rounded-xl border border-gray-200 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 cursor-pointer relative overflow-hidden ${isPaused ? 'opacity-70 bg-gray-50' : 'hover:border-navy-200'
                 }`}
         >
             {/* Status Accent Line */}

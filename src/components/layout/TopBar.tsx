@@ -7,7 +7,7 @@ interface TopBarProps {
 
 export function TopBar({ title, subtitle, actions, children }: TopBarProps) {
     return (
-        <header className="bg-white border-b border-hc-border px-6 lg:px-8 py-5 sticky top-0 z-20 shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]">
+        <header className="bg-white border-b border-hc-border px-6 lg:px-8 py-5 sticky top-0 z-20 shadow-sm transition-shadow hover:shadow-md">
             <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0">
                     <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-navy-900 uppercase truncate">
