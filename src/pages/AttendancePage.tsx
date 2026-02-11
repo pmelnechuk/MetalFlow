@@ -37,10 +37,43 @@ export function AttendancePage() {
             }
         })
 
+        // Helper to calculate hours with lunch break deduction (12:00 - 13:00)
+        const calculateHours = (cin?: string, cout?: string) => {
+            if (!cin || !cout) return 0
+            const start = new Date(cin)
+            const end = new Date(cout)
+
+            // Define lunch period for the specific day
+            const lunchStart = new Date(start)
+            lunchStart.setHours(12, 0, 0, 0)
+            const lunchEnd = new Date(start)
+            lunchEnd.setHours(13, 0, 0, 0)
+
+            // Gross duration in hours
+            let diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+
+            // Check overlap with lunch
+            if (start < lunchEnd && end > lunchStart) {
+                // Calculate overlap duration
+                const overlapStart = start > lunchStart ? start : lunchStart
+                const overlapEnd = end < lunchEnd ? end : lunchEnd
+                const overlap = (overlapEnd.getTime() - overlapStart.getTime()) / (1000 * 60 * 60)
+
+                if (overlap > 0) {
+                    diff -= overlap
+                }
+            }
+
+            return diff > 0 ? diff : 0
+        }
+
         if (Array.isArray(data)) {
             data.forEach(log => {
                 if (grouped[log.employee_id]) {
                     grouped[log.employee_id].logs[log.date] = log
+                    // Accumulate hours
+                    const hours = calculateHours(log.check_in, log.check_out)
+                    grouped[log.employee_id].totalHours = (grouped[log.employee_id].totalHours || 0) + hours
                 }
             })
         }
@@ -369,6 +402,7 @@ export function AttendancePage() {
                                                 </th>
                                             )
                                         })}
+                                        <th className="border border-black p-1 bg-gray-100 w-16 text-center">Hs Totales</th>
                                         <th className="border border-black p-1 bg-gray-100 w-32">Firma</th>
                                     </tr>
                                 </thead>
@@ -400,6 +434,9 @@ export function AttendancePage() {
                                                     </td>
                                                 )
                                             })}
+                                            <td className="border border-black p-1 text-center font-bold">
+                                                {item.totalHours ? item.totalHours.toFixed(2) : '-'}
+                                            </td>
                                             <td className="border border-black p-1"></td>
                                         </tr>
                                     ))}
@@ -416,7 +453,7 @@ export function AttendancePage() {
                             @media print {
                                 .print-hide { display: none; }
                                 body { background: white; }
-                                @page { margin: 10mm; }
+                                @page { size: landscape; margin: 10mm; }
                             }
                         `}</style>
                     </div>
