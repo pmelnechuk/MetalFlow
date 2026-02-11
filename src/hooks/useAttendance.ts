@@ -28,27 +28,29 @@ export function useAttendance() {
         }
     }, [])
 
-    const checkIn = async (employeeId: string) => {
-        const today = new Date().toISOString().split('T')[0]
-        const now = new Date()
-
-        // Determine status based on time
-        // Morning limit: 6:40 AM
-        // Afternoon limit: 13:10 PM
-        const limitMorning = new Date()
+    // Helper to calculate status based on time
+    const calculateStatus = (checkInTime: Date) => {
+        const limitMorning = new Date(checkInTime)
         limitMorning.setHours(6, 40, 0, 0)
 
-        const limitAfternoon = new Date()
+        const limitAfternoon = new Date(checkInTime)
         limitAfternoon.setHours(13, 10, 0, 0)
 
         let status = 'presente'
 
         // Logic: If check-in is before 12 PM, treat as morning shift. Else, afternoon.
-        if (now.getHours() < 12) {
-            if (now > limitMorning) status = 'tarde'
+        if (checkInTime.getHours() < 12) {
+            if (checkInTime > limitMorning) status = 'tarde'
         } else {
-            if (now > limitAfternoon) status = 'tarde'
+            if (checkInTime > limitAfternoon) status = 'tarde'
         }
+        return status
+    }
+
+    const checkIn = async (employeeId: string) => {
+        const today = new Date().toISOString().split('T')[0]
+        const now = new Date()
+        const status = calculateStatus(now)
 
         try {
             const { data, error } = await supabase
@@ -91,9 +93,17 @@ export function useAttendance() {
 
     const updateLog = async (logId: string, updates: { check_in?: string; check_out?: string }) => {
         try {
+            const finalUpdates: any = { ...updates }
+
+            // If check_in is being updated, recalculate status
+            if (updates.check_in) {
+                const checkInDate = new Date(updates.check_in)
+                finalUpdates.status = calculateStatus(checkInDate)
+            }
+
             const { data, error } = await supabase
                 .from('attendance_logs')
-                .update(updates)
+                .update(finalUpdates)
                 .eq('id', logId)
                 .select()
                 .single()
