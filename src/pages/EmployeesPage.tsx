@@ -14,28 +14,32 @@ export function EmployeesPage() {
     const [showForm, setShowForm] = useState(false)
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
     const [formData, setFormData] = useState({ first_name: '', last_name: '', role: '', status: 'active' })
-    const [employeeStats, setEmployeeStats] = useState<Record<string, { punctuality: number, attendance: number }>>({})
+    const [employeeStats, setEmployeeStats] = useState<Record<string, { punctuality: number, attendance: number, absenteeism: number }>>({})
 
     useEffect(() => {
         const loadStats = async () => {
-            const stats: Record<string, { punctuality: number, attendance: number }> = {}
+            const stats: Record<string, { punctuality: number, attendance: number, absenteeism: number }> = {}
             for (const emp of employees) {
                 const data = await getEmployeeStats(emp.id)
+                // Calculate absenteeism based on absent count vs total days
+                // If total days is 0, absenteeism is 0
+                const absentRate = (data?.totalDays || 0) > 0 ? Math.round(((data?.absentCount || 0) / (data?.totalDays || 1)) * 100) : 0
+
                 if (data) {
                     stats[emp.id] = {
-                        stats[emp.id] = {
-                            punctuality: data.punctuality,
-                            attendance: data.attendanceRate
-                        }
+                        punctuality: data.punctuality,
+                        attendance: data.attendanceRate,
+                        absenteeism: absentRate
                     }
                 }
-                setEmployeeStats(stats)
             }
+            setEmployeeStats(stats)
+        }
 
-            if (employees.length > 0) {
-                loadStats()
-            }
-        }, [employees, getEmployeeStats])
+        if (employees.length > 0) {
+            loadStats()
+        }
+    }, [employees, getEmployeeStats])
 
     const getCompletedTasksCount = (employeeId: string) => {
         return tasks.filter(t =>
@@ -136,11 +140,11 @@ export function EmployeesPage() {
                                     {employee.role}
                                 </p>
 
-                                <div className="mt-auto pt-4 border-t border-gray-100 grid grid-cols-3 gap-2 text-center">
+                                <div className="mt-auto pt-4 border-t border-gray-100 grid grid-cols-4 gap-1 text-center">
                                     <div>
-                                        <span className="block text-[10px] font-bold text-gray-400 uppercase">Puntual</span>
+                                        <span className="block text-[9px] font-bold text-gray-400 uppercase">Puntual</span>
                                         <span className={cn(
-                                            "text-sm font-black",
+                                            "text-xs font-black",
                                             (employeeStats[employee.id]?.punctuality || 0) >= 90 ? "text-green-600" :
                                                 (employeeStats[employee.id]?.punctuality || 0) >= 70 ? "text-amber-600" : "text-red-600"
                                         )}>
@@ -148,14 +152,23 @@ export function EmployeesPage() {
                                         </span>
                                     </div>
                                     <div>
-                                        <span className="block text-[10px] font-bold text-gray-400 uppercase">Asist.</span>
-                                        <span className="text-sm font-black text-navy-900">
+                                        <span className="block text-[9px] font-bold text-gray-400 uppercase">Asist.</span>
+                                        <span className="text-xs font-black text-navy-900">
                                             {employeeStats[employee.id]?.attendance ?? '-'}%
                                         </span>
                                     </div>
                                     <div>
-                                        <span className="block text-[10px] font-bold text-gray-400 uppercase">Tareas</span>
-                                        <span className="text-sm font-black text-navy-900">
+                                        <span className="block text-[9px] font-bold text-gray-400 uppercase">Ausent.</span>
+                                        <span className={cn(
+                                            "text-xs font-black",
+                                            (employeeStats[employee.id]?.absenteeism || 0) <= 5 ? "text-green-600" : "text-red-600"
+                                        )}>
+                                            {employeeStats[employee.id]?.absenteeism ?? '-'}%
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-[9px] font-bold text-gray-400 uppercase">Tareas</span>
+                                        <span className="text-xs font-black text-navy-900">
                                             {getCompletedTasksCount(employee.id)}
                                         </span>
                                     </div>

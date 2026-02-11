@@ -6,7 +6,7 @@ import { cn } from '../lib/utils'
 
 export function AttendancePage() {
     const { employees = [] } = useEmployees() // Ensure default
-    const { logs = [], fetchDailyLogs, checkIn, checkOut, updateLog, getWeeklyLogs } = useAttendance() // Ensure default
+    const { logs = [], fetchDailyLogs, checkIn, checkOut, updateLog, getWeeklyLogs, deleteLog } = useAttendance() // Ensure default
     const [currentTime, setCurrentTime] = useState(new Date())
     const [editingLog, setEditingLog] = useState<any>(null)
     const [editForm, setEditForm] = useState({ check_in: '', check_out: '' })
@@ -37,7 +37,9 @@ export function AttendancePage() {
             }
         })
 
-        // Helper to calculate hours with lunch break deduction (12:00 - 13:00)
+
+
+        // Helper to calculate hours
         const calculateHours = (cin?: string, cout?: string) => {
             if (!cin || !cout) return 0
             const start = new Date(cin)
@@ -129,6 +131,16 @@ export function AttendancePage() {
             setEditingLog(null)
         } catch (error) {
             console.error(error)
+        }
+    }
+
+    const handleDeleteLog = async (id: string) => {
+        if (confirm('¿Estás seguro de eliminar este registro de asistencia?')) {
+            try {
+                await deleteLog(id)
+            } catch (error) {
+                console.error(error)
+            }
         }
     }
 
@@ -294,13 +306,22 @@ export function AttendancePage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-3 text-right">
-                                                <button
-                                                    onClick={() => openEditModal(log)}
-                                                    className="text-gray-400 hover:text-navy-900 transition-colors"
-                                                    title="Editar horario"
-                                                >
-                                                    <span className="material-symbols-outlined text-lg">edit</span>
-                                                </button>
+                                                <div className="flex justify-end gap-1">
+                                                    <button
+                                                        onClick={() => openEditModal(log)}
+                                                        className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-navy-900 transition-colors"
+                                                        title="Editar horario"
+                                                    >
+                                                        <span className="material-symbols-outlined text-lg">edit</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteLog(log.id)}
+                                                        className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 transition-colors"
+                                                        title="Eliminar registro"
+                                                    >
+                                                        <span className="material-symbols-outlined text-lg">delete</span>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))

@@ -160,6 +160,21 @@ export function useAttendance() {
         }
     }
 
+    const deleteLog = async (logId: string) => {
+        try {
+            const { error } = await supabase
+                .from('attendance_logs')
+                .delete()
+                .eq('id', logId)
+
+            if (error) throw error
+            await fetchDailyLogs() // Refresh logs
+        } catch (error) {
+            console.error('Error deleting log:', error)
+            throw error
+        }
+    }
+
     return {
         logs,
         loading,
@@ -168,6 +183,7 @@ export function useAttendance() {
         checkOut,
         updateLog,
         getEmployeeStats,
-        getWeeklyLogs
+        getWeeklyLogs,
+        deleteLog
     }
 }
