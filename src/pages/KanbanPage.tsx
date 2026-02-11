@@ -180,7 +180,7 @@ export function KanbanPage() {
                     <>
                         <button
                             onClick={handleOpenCreate}
-                            className="hidden sm:flex items-center gap-2 px-4 py-2.5 border-[3px] border-black bg-hc-accent text-white font-black text-sm uppercase rounded-xl shadow-[3px_3px_0px_0px_#000000] active:translate-y-[1px] active:shadow-none transition-all hover:bg-hc-accent-dark"
+                            className="hidden sm:flex items-center gap-2 px-4 py-2 bg-navy-900 text-white font-bold text-xs uppercase rounded-lg shadow-md hover:bg-navy-800 hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0"
                         >
                             <span className="material-symbols-outlined text-lg">add</span>
                             Nueva Tarea
@@ -193,7 +193,7 @@ export function KanbanPage() {
                 {loading ? (
                     <div className="flex gap-4">
                         {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="min-w-[280px] w-[300px] shrink-0">
+                            <div key={i} className="min-w-[300px] w-[300px] shrink-0">
                                 <div className="skeleton h-12 w-full rounded-xl mb-3" />
                                 <div className="skeleton h-28 w-full rounded-xl mb-3" />
                                 <div className="skeleton h-28 w-full rounded-xl" />
@@ -226,7 +226,7 @@ export function KanbanPage() {
                 {/* Mobile FABs */}
                 <button
                     onClick={handleOpenCreate}
-                    className="sm:hidden fab-button fixed right-5 bottom-24 z-30 h-14 w-14 rounded-2xl bg-hc-accent border-[3px] border-black shadow-[3px_3px_0px_0px_#000000] flex items-center justify-center text-white"
+                    className="sm:hidden fixed right-6 bottom-24 z-30 h-14 w-14 rounded-full bg-navy-900 shadow-lg flex items-center justify-center text-white hover:bg-navy-800 transition-all hover:scale-105 active:scale-95"
                 >
                     <span className="material-symbols-outlined text-3xl icon-filled">add</span>
                 </button>
