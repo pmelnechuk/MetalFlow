@@ -7,10 +7,11 @@ import { TaskDetailModal } from '../components/kanban/TaskDetailModal'
 import { TopBar } from '../components/layout/TopBar'
 import type { Task, TaskStatus, TaskPriority } from '../types/database'
 import { useProjects } from '../hooks/useProjects'
-import { useNavigate } from 'react-router-dom'
 import { useDroppable } from '@dnd-kit/core'
 import { useEmployees } from '../hooks/useEmployees'
 import { getStatusLabel, getStatusIcon, cn } from '../lib/utils'
+import { VoiceRecorderButton } from '../components/ui/VoiceRecorderButton'
+import type { AITaskExtraction } from '../lib/gemini'
 
 const STATUSES: TaskStatus[] = ['backlog', 'por_hacer', 'en_proceso', 'terminado']
 
@@ -72,7 +73,6 @@ export function KanbanPage() {
     const { tasks, loading, getTasksByStatus, moveTask, createTask, updateTask, deleteTask, refetch } = useTasks()
     const { allProjects } = useProjects()
     const { employees } = useEmployees()
-    const navigate = useNavigate()
     const [activeTask, setActiveTask] = useState<Task | null>(null)
     const [menuTask, setMenuTask] = useState<Task | null>(null)
     const [detailTask, setDetailTask] = useState<Task | null>(null)
@@ -112,6 +112,26 @@ export function KanbanPage() {
         const projects = await allProjects()
         setProjectsList(projects)
         setShowCreateForm(true)
+    }
+
+    const handleVoiceProcessed = (data: AITaskExtraction) => {
+        if (data.task) setNewTaskTitle(data.task)
+        if (data.description) setNewTaskDescription(data.description)
+        if (data.project) {
+            // Simple match by name or client
+            const proj = projectsList.find(p =>
+                p.name.toLowerCase().includes(data.project.toLowerCase()) ||
+                p.client.toLowerCase().includes(data.project.toLowerCase())
+            )
+            if (proj) setNewTaskProjectId(proj.id)
+        }
+        if (data.priority) setNewTaskPriority(data.priority)
+        if (data.due_date) setNewTaskDueDate(data.due_date)
+        if (data.assigned_to && data.assigned_to.length > 0) {
+            // Match employees logic could be here, for now just add strings
+            // Ideally we match existing employees
+            setNewTaskEmployees(prev => Array.from(new Set([...prev, ...data.assigned_to])))
+        }
     }
 
     const handleCreate = async () => {
@@ -164,13 +184,6 @@ export function KanbanPage() {
                         >
                             <span className="material-symbols-outlined text-lg">add</span>
                             Nueva Tarea
-                        </button>
-                        <button
-                            onClick={() => navigate('/voz')}
-                            className="hidden sm:flex items-center gap-2 px-4 py-2.5 border-[2px] border-black bg-white text-black font-bold text-sm uppercase rounded-xl hover:bg-hc-surface transition-all"
-                        >
-                            <span className="material-symbols-outlined text-lg">mic</span>
-                            Voz
                         </button>
                     </>
                 }
@@ -298,6 +311,7 @@ export function KanbanPage() {
                                     <span className="material-symbols-outlined text-lg text-white icon-filled">add_task</span>
                                 </div>
                                 <h2 className="text-xl font-black uppercase text-black">Nueva Tarea</h2>
+                                <VoiceRecorderButton onProcessed={handleVoiceProcessed} size="sm" />
                             </div>
                             <button onClick={() => setShowCreateForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
                                 <span className="material-symbols-outlined text-lg text-gray-400">close</span>
