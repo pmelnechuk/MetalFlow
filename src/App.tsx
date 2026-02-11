@@ -3,6 +3,7 @@ import { AppShell } from './components/layout/AppShell'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { KanbanPage } from './pages/KanbanPage'
 import { EmployeesPage } from './pages/EmployeesPage'
+import { AttendancePage } from './pages/AttendancePage'
 import { SettingsPage } from './pages/SettingsPage'
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<ProjectsPage />} />
           <Route path="/tablero" element={<KanbanPage />} />
           <Route path="/empleados" element={<EmployeesPage />} />
+          <Route path="/asistencia" element={<AttendancePage />} />
           <Route path="/ajustes" element={<SettingsPage />} />
         </Route>
       </Routes>
