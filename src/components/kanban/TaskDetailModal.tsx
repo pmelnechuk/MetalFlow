@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { Task, TaskPriority, TaskStatus } from '../../types/database'
 import { useTaskComments } from '../../hooks/useTaskComments'
+import { useEmployees } from '../../hooks/useEmployees'
 import { AttachmentGallery } from './AttachmentGallery'
 import { formatDate, cn } from '../../lib/utils'
 
@@ -21,12 +22,12 @@ export function TaskDetailModal({ task, projects, onSave, onDelete, onClose }: T
     const [dueDate, setDueDate] = useState(task.due_date || '')
     const [progress, setProgress] = useState(task.progress || 0)
     const [employees, setEmployees] = useState<string[]>(task.assigned_to || [])
-    const [employeeInput, setEmployeeInput] = useState('')
     const [activeTab, setActiveTab] = useState<'detail' | 'comments' | 'attachments'>('detail')
     const [saving, setSaving] = useState(false)
     const [confirmDelete, setConfirmDelete] = useState(false)
 
     const { comments, loading: commentsLoading, addComment, deleteComment } = useTaskComments(task.id)
+    const { employees: allEmployees } = useEmployees()
     const [commentInput, setCommentInput] = useState('')
 
     // Reset when task changes
@@ -202,18 +203,25 @@ export function TaskDetailModal({ task, projects, onSave, onDelete, onClose }: T
                                             </span>
                                         ))}
                                     </div>
-                                    <input type="text" value={employeeInput}
-                                        onChange={(e) => setEmployeeInput(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if ((e.key === 'Enter' || e.key === ',') && employeeInput.trim()) {
-                                                e.preventDefault()
-                                                setEmployees(prev => [...prev, employeeInput.trim()])
-                                                setEmployeeInput('')
+                                    <select
+                                        value=""
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                setEmployees(prev => [...prev, e.target.value])
                                             }
                                         }}
-                                        placeholder="+ Empleado"
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
-                                    />
+                                    >
+                                        <option value="">+ Agregar</option>
+                                        {allEmployees
+                                            .filter(e => !employees.includes(`${e.first_name} ${e.last_name}`))
+                                            .map(emp => (
+                                                <option key={emp.id} value={`${emp.first_name} ${emp.last_name}`}>
+                                                    {emp.first_name} {emp.last_name}
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Fecha Límite</label>

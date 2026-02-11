@@ -9,6 +9,7 @@ import type { Task, TaskStatus, TaskPriority } from '../types/database'
 import { useProjects } from '../hooks/useProjects'
 import { useNavigate } from 'react-router-dom'
 import { useDroppable } from '@dnd-kit/core'
+import { useEmployees } from '../hooks/useEmployees'
 import { getStatusLabel, getStatusIcon, cn } from '../lib/utils'
 
 const STATUSES: TaskStatus[] = ['backlog', 'por_hacer', 'en_proceso', 'terminado']
@@ -70,6 +71,7 @@ function KanbanColumn({ status, tasks, onMenuClick, onTaskClick }: { status: Tas
 export function KanbanPage() {
     const { tasks, loading, getTasksByStatus, moveTask, createTask, updateTask, deleteTask, refetch } = useTasks()
     const { allProjects } = useProjects()
+    const { employees } = useEmployees()
     const navigate = useNavigate()
     const [activeTask, setActiveTask] = useState<Task | null>(null)
     const [menuTask, setMenuTask] = useState<Task | null>(null)
@@ -81,7 +83,6 @@ export function KanbanPage() {
     const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('media')
     const [newTaskDueDate, setNewTaskDueDate] = useState('')
     const [newTaskEmployees, setNewTaskEmployees] = useState<string[]>([])
-    const [employeeInput, setEmployeeInput] = useState('')
     const [projectsList, setProjectsList] = useState<{ id: string; name: string; client: string }[]>([])
 
     useRealtimeTasks(useCallback(() => { refetch() }, [refetch]))
@@ -129,7 +130,6 @@ export function KanbanPage() {
         setNewTaskPriority('media')
         setNewTaskDueDate('')
         setNewTaskEmployees([])
-        setEmployeeInput('')
         setShowCreateForm(false)
     }
 
@@ -344,19 +344,25 @@ export function KanbanPage() {
                                         </span>
                                     ))}
                                 </div>
-                                <input
-                                    type="text" value={employeeInput}
-                                    onChange={(e) => setEmployeeInput(e.target.value)}
-                                    onKeyDown={(e) => {
-                                        if ((e.key === 'Enter' || e.key === ',') && employeeInput.trim()) {
-                                            e.preventDefault()
-                                            setNewTaskEmployees(prev => [...prev, employeeInput.trim()])
-                                            setEmployeeInput('')
+                                <select
+                                    value=""
+                                    onChange={(e) => {
+                                        if (e.target.value) {
+                                            setNewTaskEmployees(prev => [...prev, e.target.value])
                                         }
                                     }}
-                                    placeholder="Nombre + Enter para agregar"
-                                    className="block w-full px-3.5 py-3 border-[2px] border-black rounded-xl bg-white text-sm font-bold text-black placeholder-gray-400 focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
-                                />
+                                    className="block w-full px-3.5 py-3 border-[2px] border-black rounded-xl bg-white text-sm font-bold text-black focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
+                                >
+                                    <option value="">+ Agregar Empleado</option>
+                                    {employees
+                                        .filter(e => !newTaskEmployees.includes(`${e.first_name} ${e.last_name}`))
+                                        .map(emp => (
+                                            <option key={emp.id} value={`${emp.first_name} ${emp.last_name}`}>
+                                                {emp.first_name} {emp.last_name}
+                                            </option>
+                                        ))
+                                    }
+                                </select>
                             </div>
                             <div className="flex gap-3">
                                 <div className="flex-1">

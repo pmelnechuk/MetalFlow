@@ -12,6 +12,66 @@ export type Database = {
     }
     public: {
         Tables: {
+            employees: {
+                Row: {
+                    id: string
+                    first_name: string
+                    last_name: string
+                    role: string
+                    status: string
+                    created_at: string | null
+                }
+                Insert: {
+                    id?: string
+                    first_name: string
+                    last_name: string
+                    role: string
+                    status?: string
+                    created_at?: string | null
+                }
+                Update: {
+                    id?: string
+                    first_name?: string
+                    last_name?: string
+                    role?: string
+                    status?: string
+                    created_at?: string | null
+                }
+                Relationships: []
+            }
+            project_employees: {
+                Row: {
+                    project_id: string
+                    employee_id: string
+                    created_at: string | null
+                }
+                Insert: {
+                    project_id: string
+                    employee_id: string
+                    created_at?: string | null
+                }
+                Update: {
+                    project_id?: string
+                    employee_id?: string
+                    created_at?: string | null
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "project_employees_project_id_fkey"
+                        columns: ["project_id"]
+                        isOneToOne: false
+                        referencedRelation: "projects"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "project_employees_employee_id_fkey"
+                        columns: ["employee_id"]
+                        isOneToOne: false
+                        referencedRelation: "employees"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
             projects: {
                 Row: {
                     client: string
@@ -110,6 +170,7 @@ export type TaskPriority = Database["public"]["Enums"]["task_priority"]
 export type TaskStatus = Database["public"]["Enums"]["task_status"]
 export type ProjectStatus = Database["public"]["Enums"]["project_status"]
 
+export type Employee = Database["public"]["Tables"]["employees"]["Row"]
 export type Project = Database["public"]["Tables"]["projects"]["Row"]
 export type Task = Database["public"]["Tables"]["tasks"]["Row"] & {
     project?: Project | null

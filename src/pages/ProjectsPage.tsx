@@ -20,14 +20,14 @@ export function ProjectsPage() {
         searchProjects(query)
     }
 
-    const handleCreate = async (data: { name: string; client: string }) => {
+    const handleCreate = async (data: { name: string; client: string; employeeIds: string[] }) => {
         await createProject(data)
         setShowForm(false)
     }
 
-    const handleEdit = async (data: { name: string; client: string }) => {
+    const handleEdit = async (data: { name: string; client: string; employeeIds: string[] }) => {
         if (editingProject) {
-            await updateProject(editingProject.id, data)
+            await updateProject(editingProject.id, { name: data.name, client: data.client }, data.employeeIds)
             setEditingProject(null)
         }
     }
@@ -161,7 +161,7 @@ export function ProjectsPage() {
                 <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => { setShowForm(false); setEditingProject(null); }}>
                     <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                         <ProjectForm
-                            initialData={editingProject ? { name: editingProject.name, client: editingProject.client } : undefined}
+                            initialData={editingProject ? { id: editingProject.id, name: editingProject.name, client: editingProject.client } : undefined}
                             onSubmit={editingProject ? handleEdit : handleCreate}
                             onCancel={() => { setShowForm(false); setEditingProject(null); setConfirmDelete(null); }}
                         />
