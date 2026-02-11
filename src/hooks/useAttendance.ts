@@ -121,12 +121,17 @@ export function useAttendance() {
             const total = data.length
             const present = data.filter(l => l.status === 'presente').length
             const late = data.filter(l => l.status === 'tarde').length
+            const absent = data.filter(l => l.status === 'ausente').length
 
             return {
                 totalDays: total,
                 presentCount: present,
                 lateCount: late,
-                punctuality: total > 0 ? Math.round((present / total) * 100) : 0
+                absentCount: absent,
+                // Punctuality: On Time / (On Time + Late)
+                punctuality: (present + late) > 0 ? Math.round((present / (present + late)) * 100) : 0,
+                // Attendance Rate: (Present + Late) / Total (including absent)
+                attendanceRate: total > 0 ? Math.round(((present + late) / total) * 100) : 0
             }
         } catch (error) {
             console.error('Error getting stats:', error)

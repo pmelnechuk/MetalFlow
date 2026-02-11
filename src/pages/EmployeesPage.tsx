@@ -23,18 +23,19 @@ export function EmployeesPage() {
                 const data = await getEmployeeStats(emp.id)
                 if (data) {
                     stats[emp.id] = {
-                        punctuality: data.punctuality,
-                        attendance: Math.round((data.presentCount / Math.max(data.totalDays, 1)) * 100) // Simple attendance % based on logs
+                        stats[emp.id] = {
+                            punctuality: data.punctuality,
+                            attendance: data.attendanceRate
+                        }
                     }
                 }
+                setEmployeeStats(stats)
             }
-            setEmployeeStats(stats)
-        }
 
-        if (employees.length > 0) {
-            loadStats()
-        }
-    }, [employees, getEmployeeStats])
+            if (employees.length > 0) {
+                loadStats()
+            }
+        }, [employees, getEmployeeStats])
 
     const getCompletedTasksCount = (employeeId: string) => {
         return tasks.filter(t =>
