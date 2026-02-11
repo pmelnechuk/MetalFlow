@@ -23,7 +23,7 @@ describe('utils', () => {
             // new Date('2023-01-15T12:00:00') might depend on timezone if not handled carefully,
             // but the implementation uses getDate() and getMonth() which use local time.
             // Ensure we test with a date that safely falls in the same day.
-            const dateStr = '2023-01-15T12:00:00'
+
             // Mocking timezone might be needed if strict, but for now let's hope it's stable enough or checking loose match.
             // Actually, let's just check the structure or mock the date if needed. 
             // Ideally, we should mock the system time or pass a specific timezone date. 
