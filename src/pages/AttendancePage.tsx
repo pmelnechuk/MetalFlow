@@ -6,8 +6,98 @@ import { cn } from '../lib/utils'
 
 export function AttendancePage() {
     const { employees = [] } = useEmployees() // Ensure default
-    const { logs = [], fetchDailyLogs, checkIn, checkOut } = useAttendance() // Ensure default
+    const { logs = [], fetchDailyLogs, checkIn, checkOut, updateLog, getWeeklyLogs } = useAttendance() // Ensure default
     const [currentTime, setCurrentTime] = useState(new Date())
+    const [editingLog, setEditingLog] = useState<any>(null)
+    const [editForm, setEditForm] = useState({ check_in: '', check_out: '' })
+
+    // Report State
+    const [showReport, setShowReport] = useState(false)
+    const [reportData, setReportData] = useState<any[]>([])
+    const [reportRange, setReportRange] = useState({ start: '', end: '' })
+
+    const handleGenerateReport = async () => {
+        const today = new Date()
+        const day = today.getDay()
+        const diff = today.getDate() - day + (day === 0 ? -6 : 1) // Adjust when day is Sunday
+        const monday = new Date(today.setDate(diff)).toISOString().split('T')[0]
+        const friday = new Date(today.setDate(diff + 4)).toISOString().split('T')[0]
+
+        setReportRange({ start: monday, end: friday })
+        const data = await getWeeklyLogs(monday, friday)
+
+        // Group by employee
+        const grouped: Record<string, any> = {}
+        employees.forEach(emp => {
+            if (emp.status === 'active') {
+                grouped[emp.id] = {
+                    employee: emp,
+                    logs: {}
+                }
+            }
+        })
+
+        if (Array.isArray(data)) {
+            data.forEach(log => {
+                if (grouped[log.employee_id]) {
+                    grouped[log.employee_id].logs[log.date] = log
+                }
+            })
+        }
+
+        setReportData(Object.values(grouped))
+        setShowReport(true)
+    }
+
+    const openEditModal = (log: any) => {
+        setEditingLog(log)
+
+        // Helper to ensure HH:mm format for input type="time"
+        const toInputTime = (isoString: string) => {
+            if (!isoString) return ''
+            const d = new Date(isoString)
+            return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+        }
+
+        setEditForm({
+            check_in: log.check_in ? toInputTime(log.check_in) : '',
+            check_out: log.check_out ? toInputTime(log.check_out) : ''
+        })
+    }
+
+    const handleUpdateLog = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!editingLog) return
+
+        try {
+            const datePrefix = editingLog.date // "YYYY-MM-DD"
+
+            // Helper to combine date + time string into ISO
+            const toISO = (timeStr: string) => {
+                if (!timeStr) return null
+                const [hours, minutes] = timeStr.split(':')
+                const d = new Date(datePrefix)
+                d.setHours(parseInt(hours), parseInt(minutes))
+                // Adjust for local timezone offset if needed, but for simplicity relying on local time rendering
+                // Better approach: construct date object in local time then toISOString, 
+                // but since we receive YYYY-MM-DD from DB which is UTC 00:00 usually, we need to be careful.
+                // Simplified: use current date object, set date to log date, set time.
+                const fullDate = new Date()
+                const [year, month, day] = datePrefix.split('-')
+                fullDate.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day))
+                fullDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+                return fullDate.toISOString()
+            }
+
+            await updateLog(editingLog.id, {
+                check_in: toISO(editForm.check_in)!,
+                check_out: editForm.check_out ? toISO(editForm.check_out)! : undefined
+            })
+            setEditingLog(null)
+        } catch (error) {
+            console.error(error)
+        }
+    }
 
     useEffect(() => {
         fetchDailyLogs()
@@ -61,8 +151,17 @@ export function AttendancePage() {
                 title="Asistencia"
                 subtitle={currentTime.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 actions={
-                    <div className="text-2xl font-black text-navy-900 font-mono bg-white px-4 py-1 rounded-lg shadow-sm border border-gray-100">
-                        {formatTime(currentTime)}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleGenerateReport}
+                            className="bg-navy-900 text-white font-bold text-xs uppercase px-4 py-2 rounded-lg shadow hover:bg-navy-800 flex items-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-lg">print</span>
+                            <span className="hidden sm:inline">Reporte Semanal</span>
+                        </button>
+                        <div className="text-2xl font-black text-navy-900 font-mono bg-white px-4 py-1 rounded-lg shadow-sm border border-gray-100">
+                            {formatTime(currentTime)}
+                        </div>
                     </div>
                 }
             />
@@ -129,12 +228,13 @@ export function AttendancePage() {
                                     <th className="px-6 py-3">Entrada</th>
                                     <th className="px-6 py-3">Salida</th>
                                     <th className="px-6 py-3">Estado</th>
+                                    <th className="px-6 py-3 w-10"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {!logs || logs.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
+                                        <td colSpan={5} className="px-6 py-8 text-center text-gray-400">
                                             No hay registros de asistencia hoy.
                                         </td>
                                     </tr>
@@ -160,6 +260,15 @@ export function AttendancePage() {
                                                     {log.status}
                                                 </span>
                                             </td>
+                                            <td className="px-6 py-3 text-right">
+                                                <button
+                                                    onClick={() => openEditModal(log)}
+                                                    className="text-gray-400 hover:text-navy-900 transition-colors"
+                                                    title="Editar horario"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">edit</span>
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 )}
@@ -168,6 +277,151 @@ export function AttendancePage() {
                     </div>
                 </div>
             </main>
+
+            {/* Edit Log Modal */}
+            {editingLog && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setEditingLog(null)}>
+                    <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl" onClick={e => e.stopPropagation()}>
+                        <h3 className="font-bold text-navy-900 text-lg mb-4">Editar Registro</h3>
+                        <form onSubmit={handleUpdateLog} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Entrada</label>
+                                <input
+                                    type="time"
+                                    required
+                                    value={editForm.check_in}
+                                    onChange={e => setEditForm({ ...editForm, check_in: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-900 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Salida</label>
+                                <input
+                                    type="time"
+                                    value={editForm.check_out}
+                                    onChange={e => setEditForm({ ...editForm, check_out: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-900 outline-none"
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingLog(null)}
+                                    className="px-4 py-2 text-gray-600 font-bold text-xs uppercase hover:bg-gray-100 rounded-lg"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-navy-900 text-white font-bold text-xs uppercase rounded-lg hover:bg-navy-800"
+                                >
+                                    Guardar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Weekly Report Modal (Print View) */}
+            {showReport && (
+                <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
+                    <div className="p-8 max-w-[210mm] mx-auto"> {/* A4 Width */}
+                        <div className="flex justify-between items-start mb-8 print-hide">
+                            <h2 className="text-2xl font-bold text-navy-900">Vista Previa del Reporte</h2>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => window.print()}
+                                    className="px-4 py-2 bg-navy-900 text-white font-bold rounded-lg hover:bg-navy-800"
+                                >
+                                    Imprimir / PDF
+                                </button>
+                                <button
+                                    onClick={() => setShowReport(false)}
+                                    className="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg"
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Printable Content */}
+                        <div className="border border-black p-4" id="printable-area">
+                            <div className="text-center mb-6 border-b border-black pb-4">
+                                <h1 className="text-2xl font-bold uppercase mb-1">MetalFlow - Reporte de Asistencia</h1>
+                                <p className="font-mono text-sm">
+                                    Semana: {reportRange.start} al {reportRange.end}
+                                </p>
+                            </div>
+
+                            <table className="w-full text-xs border-collapse border border-black">
+                                <thead>
+                                    <tr>
+                                        <th className="border border-black p-1 bg-gray-100 w-1/4">Empleado</th>
+                                        {['Lun', 'Mar', 'Mié', 'Jue', 'Vie'].map((day, i) => {
+                                            // Calculate date for header
+                                            const d = new Date(reportRange.start)
+                                            d.setDate(d.getDate() + i)
+                                            return (
+                                                <th key={day} className="border border-black p-1 bg-gray-100 text-center">
+                                                    {day} <br />
+                                                    <span className="text-[9px] font-normal">{d.getDate()}/{d.getMonth() + 1}</span>
+                                                </th>
+                                            )
+                                        })}
+                                        <th className="border border-black p-1 bg-gray-100 w-32">Firma</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {reportData.map((item: any) => (
+                                        <tr key={item.employee.id}>
+                                            <td className="border border-black p-2 font-bold uppercase">
+                                                {item.employee.last_name}, {item.employee.first_name}
+                                                <div className="text-[9px] font-normal text-gray-500">{item.employee.role}</div>
+                                            </td>
+                                            {Array.from({ length: 5 }).map((_, i) => {
+                                                // Fix timezone issue by treating string strictly as YYYY-MM-DD
+                                                const [y, m, day] = reportRange.start.split('-').map(Number)
+                                                const current = new Date(y, m - 1, day + i)
+                                                const dateStr = current.toISOString().split('T')[0]
+                                                const log = item.logs[dateStr]
+
+                                                return (
+                                                    <td key={i} className="border border-black p-1 text-center h-12 align-middle">
+                                                        {log ? (
+                                                            <div className="flex flex-col text-[10px]">
+                                                                <span>{log.check_in ? new Date(log.check_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</span>
+                                                                <span className="border-t border-black/20 my-0.5"></span>
+                                                                <span>{log.check_out ? new Date(log.check_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-gray-300">-</span>
+                                                        )}
+                                                    </td>
+                                                )
+                                            })}
+                                            <td className="border border-black p-1"></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+
+                            <div className="mt-8 flex justify-between text-xs font-bold uppercase pt-8">
+                                <div className="border-t border-black w-32 pt-1 text-center">Firma Responsable</div>
+                                <div className="border-t border-black w-32 pt-1 text-center">Fecha</div>
+                            </div>
+                        </div>
+
+                        <style>{`
+                            @media print {
+                                .print-hide { display: none; }
+                                body { background: white; }
+                                @page { margin: 10mm; }
+                            }
+                        `}</style>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

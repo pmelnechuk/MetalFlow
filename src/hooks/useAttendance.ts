@@ -32,10 +32,23 @@ export function useAttendance() {
         const today = new Date().toISOString().split('T')[0]
         const now = new Date()
 
-        // Determine status based on time (e.g., late if after 9:00 AM)
-        const limitTime = new Date()
-        limitTime.setHours(9, 0, 0, 0)
-        const status = now > limitTime ? 'tarde' : 'presente'
+        // Determine status based on time
+        // Morning limit: 6:40 AM
+        // Afternoon limit: 13:10 PM
+        const limitMorning = new Date()
+        limitMorning.setHours(6, 40, 0, 0)
+
+        const limitAfternoon = new Date()
+        limitAfternoon.setHours(13, 10, 0, 0)
+
+        let status = 'presente'
+
+        // Logic: If check-in is before 12 PM, treat as morning shift. Else, afternoon.
+        if (now.getHours() < 12) {
+            if (now > limitMorning) status = 'tarde'
+        } else {
+            if (now > limitAfternoon) status = 'tarde'
+        }
 
         try {
             const { data, error } = await supabase
@@ -76,6 +89,24 @@ export function useAttendance() {
         }
     }
 
+    const updateLog = async (logId: string, updates: { check_in?: string; check_out?: string }) => {
+        try {
+            const { data, error } = await supabase
+                .from('attendance_logs')
+                .update(updates)
+                .eq('id', logId)
+                .select()
+                .single()
+
+            if (error) throw error
+            await fetchDailyLogs()
+            return data
+        } catch (error) {
+            console.error('Error updating log:', error)
+            throw error
+        }
+    }
+
     const getEmployeeStats = async (employeeId: string) => {
         try {
             // Get last 30 days logs
@@ -103,12 +134,35 @@ export function useAttendance() {
         }
     }
 
+    const getWeeklyLogs = async (startDate: string, endDate: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('attendance_logs')
+                .select(`
+                    *,
+                    employee:employees (id, first_name, last_name, role)
+                `)
+                .gte('date', startDate)
+                .lte('date', endDate)
+                .order('date', { ascending: true })
+                .order('check_in', { ascending: true })
+
+            if (error) throw error
+            return data as any[]
+        } catch (error) {
+            console.error('Error fetching weekly logs:', error)
+            return []
+        }
+    }
+
     return {
         logs,
         loading,
         fetchDailyLogs,
         checkIn,
         checkOut,
-        getEmployeeStats
+        updateLog,
+        getEmployeeStats,
+        getWeeklyLogs
     }
 }

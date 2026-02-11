@@ -88,10 +88,10 @@ export function EmployeesPage() {
                             setFormData({ first_name: '', last_name: '', role: '', status: 'active' })
                             setShowForm(true)
                         }}
-                        className="hidden sm:flex items-center gap-2 px-4 py-2 bg-navy-900 text-white font-bold text-xs uppercase rounded-lg shadow-md hover:bg-navy-800 transition-all"
+                        className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-navy-900 text-white font-bold text-xs uppercase rounded-lg shadow-md hover:bg-navy-800 transition-all"
                     >
                         <span className="material-symbols-outlined text-lg">add</span>
-                        Nuevo Empleado
+                        <span className="hidden sm:inline">Nuevo Empleado</span>
                     </button>
                 }
             />
