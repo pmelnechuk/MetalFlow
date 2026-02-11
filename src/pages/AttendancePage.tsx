@@ -5,8 +5,8 @@ import { TopBar } from '../components/layout/TopBar'
 import { cn } from '../lib/utils'
 
 export function AttendancePage() {
-    const { employees } = useEmployees()
-    const { logs, fetchDailyLogs, checkIn, checkOut } = useAttendance()
+    const { employees = [] } = useEmployees() // Ensure default
+    const { logs = [], fetchDailyLogs, checkIn, checkOut } = useAttendance() // Ensure default
     const [currentTime, setCurrentTime] = useState(new Date())
 
     useEffect(() => {
@@ -16,6 +16,7 @@ export function AttendancePage() {
     }, [fetchDailyLogs])
 
     const getEmployeeStatus = (employeeId: string) => {
+        if (!Array.isArray(logs)) return 'pending'
         const log = logs.find(l => l.employee_id === employeeId)
         if (!log) return 'pending' // No ha llegado
         if (log.check_out) return 'completed' // Ya se fue
@@ -33,8 +34,26 @@ export function AttendancePage() {
     }
 
     const formatTime = (date: Date) => {
-        return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+        try {
+            return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+        } catch (e) {
+            return '--:--'
+        }
     }
+
+    const safeTimeToken = (isoString: string | null | undefined) => {
+        if (!isoString) return '-'
+        try {
+            const date = new Date(isoString)
+            if (isNaN(date.getTime())) return '-'
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        } catch (e) {
+            return '-'
+        }
+    }
+
+    // Safeguard: if employees is not loaded yet or error
+    if (!employees) return null
 
     return (
         <div className="flex flex-col h-screen bg-slate-50">
@@ -53,9 +72,9 @@ export function AttendancePage() {
                 <div className="mb-8">
                     <h2 className="text-lg font-bold text-navy-900 mb-4 uppercase tracking-wide">Registro Rápido</h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                        {employees.filter(e => e.status === 'active').map(employee => {
+                        {Array.isArray(employees) && employees.filter(e => e.status === 'active').map(employee => {
                             const status = getEmployeeStatus(employee.id)
-                            const log = logs.find(l => l.employee_id === employee.id)
+                            const log = Array.isArray(logs) ? logs.find(l => l.employee_id === employee.id) : null
 
                             return (
                                 <button
@@ -75,7 +94,7 @@ export function AttendancePage() {
                                         status === 'working' && "bg-green-100 text-green-700 animate-pulse",
                                         status === 'completed' && "bg-gray-200 text-gray-500"
                                     )}>
-                                        {employee.first_name[0]}{employee.last_name[0]}
+                                        {employee.first_name?.[0]}{employee.last_name?.[0]}
                                     </div>
                                     <h3 className="font-bold text-navy-900 text-sm mb-1">{employee.first_name}</h3>
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
@@ -83,9 +102,9 @@ export function AttendancePage() {
                                             status === 'working' ? 'Marcar Salida' : 'Jornada Finalizada'}
                                     </span>
 
-                                    {status === 'working' && log?.check_in && (
+                                    {status === 'working' && (
                                         <div className="mt-2 text-xs font-mono text-green-700 bg-green-100 px-2 py-0.5 rounded">
-                                            {new Date(log.check_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {safeTimeToken(log?.check_in)}
                                         </div>
                                     )}
                                 </button>
@@ -99,7 +118,7 @@ export function AttendancePage() {
                     <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                         <h3 className="font-bold text-navy-900 uppercase">Registros de Hoy</h3>
                         <span className="text-xs font-medium text-gray-500">
-                            {logs.length} registros
+                            {logs?.length || 0} registros
                         </span>
                     </div>
                     <div className="overflow-x-auto">
@@ -113,7 +132,7 @@ export function AttendancePage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {logs.length === 0 ? (
+                                {!logs || logs.length === 0 ? (
                                     <tr>
                                         <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
                                             No hay registros de asistencia hoy.
@@ -126,10 +145,10 @@ export function AttendancePage() {
                                                 {(log as any).employee?.first_name} {(log as any).employee?.last_name}
                                             </td>
                                             <td className="px-6 py-3 font-mono text-gray-600">
-                                                {log.check_in ? new Date(log.check_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                {safeTimeToken(log.check_in)}
                                             </td>
                                             <td className="px-6 py-3 font-mono text-gray-600">
-                                                {log.check_out ? new Date(log.check_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                {safeTimeToken(log.check_out)}
                                             </td>
                                             <td className="px-6 py-3">
                                                 <span className={cn(
