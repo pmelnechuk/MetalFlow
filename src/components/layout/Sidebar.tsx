@@ -1,12 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { cn } from '../../lib/utils'
 
-const navItems = [
-    { path: '/', icon: 'folder_open', label: 'Proyectos' },
-    { path: '/tablero', icon: 'view_kanban', label: 'Tablero' },
-    { path: '/empleados', icon: 'groups', label: 'Personal' },
-    { path: '/voz', icon: 'mic', label: 'Grabación' },
-    { path: '/ajustes', icon: 'settings', label: 'Ajustes' },
+{ path: '/', icon: 'folder_open', label: 'Proyectos' },
+{ path: '/tablero', icon: 'view_kanban', label: 'Tablero' },
+{ path: '/empleados', icon: 'groups', label: 'Personal' },
+{ path: '/ajustes', icon: 'settings', label: 'Ajustes' },
 ]
 
 export function Sidebar() {

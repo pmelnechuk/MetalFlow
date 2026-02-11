@@ -5,7 +5,6 @@ const tabs = [
     { path: '/', icon: 'folder_open', label: 'Proyectos' },
     { path: '/tablero', icon: 'view_kanban', label: 'Tablero' },
     { path: '/empleados', icon: 'groups', label: 'Personal' },
-    { path: '/voz', icon: 'mic', label: 'Voz' },
     { path: '/ajustes', icon: 'settings', label: 'Ajustes' },
 ]
 
