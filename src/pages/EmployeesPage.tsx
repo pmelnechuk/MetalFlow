@@ -1,15 +1,47 @@
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useEmployees } from '../hooks/useEmployees'
+import { useAttendance } from '../hooks/useAttendance'
+import { useTasks } from '../hooks/useTasks'
 import { TopBar } from '../components/layout/TopBar'
 import { cn } from '../lib/utils'
 import type { Employee } from '../types/database'
 
 export function EmployeesPage() {
     const { employees, loading, createEmployee, updateEmployee, deleteEmployee } = useEmployees()
+    const { getEmployeeStats } = useAttendance()
+    const { tasks } = useTasks()
+
     const [showForm, setShowForm] = useState(false)
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
     const [formData, setFormData] = useState({ first_name: '', last_name: '', role: '', status: 'active' })
+    const [employeeStats, setEmployeeStats] = useState<Record<string, { punctuality: number, attendance: number }>>({})
+
+    useEffect(() => {
+        const loadStats = async () => {
+            const stats: Record<string, { punctuality: number, attendance: number }> = {}
+            for (const emp of employees) {
+                const data = await getEmployeeStats(emp.id)
+                if (data) {
+                    stats[emp.id] = {
+                        punctuality: data.punctuality,
+                        attendance: Math.round((data.presentCount / Math.max(data.totalDays, 1)) * 100) // Simple attendance % based on logs
+                    }
+                }
+            }
+            setEmployeeStats(stats)
+        }
+
+        if (employees.length > 0) {
+            loadStats()
+        }
+    }, [employees, getEmployeeStats])
+
+    const getCompletedTasksCount = (employeeId: string) => {
+        return tasks.filter(t =>
+            t.status === 'terminado' &&
+            t.assigned_to?.includes(employeeId)
+        ).length
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -82,7 +114,7 @@ export function EmployeesPage() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {employees.map((employee) => (
-                            <div key={employee.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 relative group">
+                            <div key={employee.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 relative group flex flex-col">
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="w-10 h-10 rounded-full bg-navy-50 flex items-center justify-center text-navy-700 font-bold text-lg">
                                         {employee.first_name[0]}{employee.last_name[0]}
@@ -102,12 +134,40 @@ export function EmployeesPage() {
                                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
                                     {employee.role}
                                 </p>
-                                <span className={cn(
-                                    "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-                                    employee.status === 'active' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
-                                )}>
-                                    {employee.status === 'active' ? 'Activo' : 'Inactivo'}
-                                </span>
+
+                                <div className="mt-auto pt-4 border-t border-gray-100 grid grid-cols-3 gap-2 text-center">
+                                    <div>
+                                        <span className="block text-[10px] font-bold text-gray-400 uppercase">Puntual</span>
+                                        <span className={cn(
+                                            "text-sm font-black",
+                                            (employeeStats[employee.id]?.punctuality || 0) >= 90 ? "text-green-600" :
+                                                (employeeStats[employee.id]?.punctuality || 0) >= 70 ? "text-amber-600" : "text-red-600"
+                                        )}>
+                                            {employeeStats[employee.id]?.punctuality ?? '-'}%
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-[10px] font-bold text-gray-400 uppercase">Asist.</span>
+                                        <span className="text-sm font-black text-navy-900">
+                                            {employeeStats[employee.id]?.attendance ?? '-'}%
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-[10px] font-bold text-gray-400 uppercase">Tareas</span>
+                                        <span className="text-sm font-black text-navy-900">
+                                            {getCompletedTasksCount(employee.id)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="mt-3">
+                                    <span className={cn(
+                                        "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
+                                        employee.status === 'active' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+                                    )}>
+                                        {employee.status === 'active' ? 'Activo' : 'Inactivo'}
+                                    </span>
+                                </div>
                             </div>
                         ))}
                     </div>

@@ -12,6 +12,44 @@ export type Database = {
     }
     public: {
         Tables: {
+            attendance_logs: {
+                Row: {
+                    id: string
+                    employee_id: string
+                    date: string
+                    check_in: string | null
+                    check_out: string | null
+                    status: string
+                    created_at: string | null
+                }
+                Insert: {
+                    id?: string
+                    employee_id: string
+                    date?: string
+                    check_in?: string | null
+                    check_out?: string | null
+                    status: string
+                    created_at?: string | null
+                }
+                Update: {
+                    id?: string
+                    employee_id?: string
+                    date?: string
+                    check_in?: string | null
+                    check_out?: string | null
+                    status?: string
+                    created_at?: string | null
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "attendance_logs_employee_id_fkey"
+                        columns: ["employee_id"]
+                        isOneToOne: false
+                        referencedRelation: "employees"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
             employees: {
                 Row: {
                     id: string
@@ -175,3 +213,4 @@ export type Project = Database["public"]["Tables"]["projects"]["Row"]
 export type Task = Database["public"]["Tables"]["tasks"]["Row"] & {
     project?: Project | null
 }
+export type AttendanceLog = Database["public"]["Tables"]["attendance_logs"]["Row"]
