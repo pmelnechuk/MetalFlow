@@ -191,6 +191,44 @@ export type Database = {
                     },
                 ]
             }
+            task_attachments: {
+                Row: {
+                    id: string
+                    task_id: string | null
+                    filename: string
+                    storage_path: string
+                    mime_type: string | null
+                    size_bytes: number | null
+                    created_at: string | null
+                }
+                Insert: {
+                    id?: string
+                    task_id?: string | null
+                    filename: string
+                    storage_path: string
+                    mime_type?: string | null
+                    size_bytes?: number | null
+                    created_at?: string | null
+                }
+                Update: {
+                    id?: string
+                    task_id?: string | null
+                    filename?: string
+                    storage_path?: string
+                    mime_type?: string | null
+                    size_bytes?: number | null
+                    created_at?: string | null
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "task_attachments_task_id_fkey"
+                        columns: ["task_id"]
+                        isOneToOne: false
+                        referencedRelation: "tasks"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
         }
         Views: Record<string, never>
         Functions: Record<string, never>
@@ -214,3 +252,4 @@ export type Task = Database["public"]["Tables"]["tasks"]["Row"] & {
     project?: Project | null
 }
 export type AttendanceLog = Database["public"]["Tables"]["attendance_logs"]["Row"]
+export type TaskAttachment = Database["public"]["Tables"]["task_attachments"]["Row"]

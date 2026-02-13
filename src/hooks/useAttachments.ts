@@ -1,15 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-
-export interface TaskAttachment {
-    id: string
-    task_id: string
-    filename: string
-    storage_path: string
-    mime_type: string
-    size_bytes: number | null
-    created_at: string
-}
+import type { TaskAttachment } from '../types/database'
 
 export function useAttachments(taskId: string | null) {
     const [attachments, setAttachments] = useState<TaskAttachment[]>([])
@@ -19,8 +10,8 @@ export function useAttachments(taskId: string | null) {
     const fetchAttachments = useCallback(async () => {
         if (!taskId) return
         setLoading(true)
-        const { data } = await (supabase
-            .from('task_attachments') as any)
+        const { data } = await supabase
+            .from('task_attachments')
             .select('*')
             .eq('task_id', taskId)
             .order('created_at', { ascending: false })
@@ -37,7 +28,10 @@ export function useAttachments(taskId: string | null) {
         setUploading(true)
         try {
             const ext = file.name.split('.').pop() || 'jpg'
-            const path = `${taskId}/${crypto.randomUUID()}.${ext}`
+            const randomId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2)
+            const path = `${taskId}/${randomId}.${ext}`
+
+            console.log('[Upload] Starting upload for:', file.name)
 
             const { error: uploadError } = await supabase.storage
                 .from('task-attachments')
@@ -49,8 +43,10 @@ export function useAttachments(taskId: string | null) {
                 return
             }
 
-            const { data, error } = await (supabase
-                .from('task_attachments') as any)
+            console.log('[Upload] Storage success, inserting DB record...')
+
+            const { data, error } = await supabase
+                .from('task_attachments')
                 .insert({
                     task_id: taskId,
                     filename: file.name,
@@ -61,7 +57,12 @@ export function useAttachments(taskId: string | null) {
                 .select('*')
                 .single()
 
-            if (!error && data) {
+            if (error) {
+                console.error('[Insert Error]', error)
+                // Attempt cleanup
+                await supabase.storage.from('task-attachments').remove([path])
+            } else if (data) {
+                console.log('[Upload] Success:', data)
                 setAttachments(prev => [data as TaskAttachment, ...prev])
             }
         } catch (err) {
@@ -72,7 +73,7 @@ export function useAttachments(taskId: string | null) {
 
     const deleteAttachment = async (att: TaskAttachment) => {
         await supabase.storage.from('task-attachments').remove([att.storage_path])
-        await (supabase.from('task_attachments') as any).delete().eq('id', att.id)
+        await supabase.from('task_attachments').delete().eq('id', att.id)
         setAttachments(prev => prev.filter(a => a.id !== att.id))
     }
 
