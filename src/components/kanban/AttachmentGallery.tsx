@@ -58,7 +58,7 @@ export function AttachmentGallery({ taskId }: AttachmentGalleryProps) {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {attachments.map(att => (
                         <div key={att.id} className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow aspect-square">
-                            {isImage(att.mime_type) ? (
+                            {isImage(att.mime_type || '') ? (
                                 <a href={getPublicUrl(att.storage_path)} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
                                     <img
                                         src={getPublicUrl(att.storage_path)}
