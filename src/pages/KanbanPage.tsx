@@ -303,44 +303,44 @@ export function KanbanPage() {
 
             {/* Create task modal */}
             {showCreateForm && (
-                <div className="fixed inset-0 z-50 modal-overlay bg-black/40 flex items-center justify-center p-4">
-                    <div className="modal-sheet bg-white w-full max-w-md rounded-2xl border-[3px] border-black p-6 shadow-[6px_6px_0px_0px_#000000]">
-                        <div className="flex justify-between items-center mb-5">
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowCreateForm(false)}>
+                    <div className="bg-white w-full max-w-md rounded-xl shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
                             <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 bg-hc-accent rounded-lg border-2 border-black flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-lg text-white icon-filled">add_task</span>
+                                <div className="w-10 h-10 bg-navy-50 rounded-lg flex items-center justify-center text-navy-900">
+                                    <span className="material-symbols-outlined text-2xl">add_task</span>
                                 </div>
-                                <h2 className="text-xl font-black uppercase text-black">Nueva Tarea</h2>
+                                <h2 className="text-xl font-bold text-navy-900 uppercase tracking-tight">Nueva Tarea</h2>
                                 <VoiceRecorderButton onProcessed={handleVoiceProcessed} size="sm" />
                             </div>
-                            <button onClick={() => setShowCreateForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
-                                <span className="material-symbols-outlined text-lg text-gray-400">close</span>
+                            <button onClick={() => setShowCreateForm(false)} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-400">
+                                <span className="material-symbols-outlined text-xl">close</span>
                             </button>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             <div>
-                                <label className="text-xs font-extrabold uppercase text-hc-accent block mb-1.5 border-l-[3px] border-hc-accent pl-2">Tarea</label>
+                                <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Tarea</label>
                                 <input
                                     type="text" value={newTaskTitle}
                                     onChange={(e) => setNewTaskTitle(e.target.value)}
                                     placeholder="Ej: Cortar chapas del 18"
-                                    className="block w-full px-3.5 py-3 border-[2px] border-black rounded-xl bg-white text-sm font-bold text-black placeholder-gray-400 focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none transition-all placeholder:text-gray-400"
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-extrabold uppercase text-hc-accent block mb-1.5 border-l-[3px] border-hc-accent pl-2">Descripción</label>
+                                <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Descripción</label>
                                 <textarea
                                     value={newTaskDescription}
                                     onChange={(e) => setNewTaskDescription(e.target.value)}
                                     placeholder="Detalle de la tarea..."
-                                    rows={2}
-                                    className="block w-full px-3.5 py-3 border-[2px] border-black rounded-xl bg-white text-sm font-bold text-black placeholder-gray-400 focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors resize-none"
+                                    rows={3}
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-navy-900 bg-white placeholder-gray-400 focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none transition-all resize-none"
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-extrabold uppercase text-hc-accent block mb-1.5 border-l-[3px] border-hc-accent pl-2">Proyecto</label>
+                                <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Proyecto</label>
                                 <select value={newTaskProjectId} onChange={(e) => setNewTaskProjectId(e.target.value)}
-                                    className="block w-full px-3.5 py-3 border-[2px] border-black rounded-xl bg-white text-sm font-bold text-black focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
                                 >
                                     <option value="">Sin proyecto</option>
                                     {projectsList.map(p => (
@@ -349,12 +349,12 @@ export function KanbanPage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-extrabold uppercase text-hc-accent block mb-1.5 border-l-[3px] border-hc-accent pl-2">Empleados Responsables</label>
+                                <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Empleados Responsables</label>
                                 <div className="flex flex-wrap gap-1.5 mb-2">
                                     {newTaskEmployees.map((emp, i) => (
-                                        <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-hc-accent-light border-[2px] border-hc-accent rounded-lg text-xs font-extrabold text-hc-accent-dark uppercase">
+                                        <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-100 rounded text-[10px] font-bold text-navy-700 uppercase">
                                             {emp}
-                                            <button onClick={() => setNewTaskEmployees(prev => prev.filter((_, j) => j !== i))} className="hover:text-red-500 transition-colors">×</button>
+                                            <button onClick={() => setNewTaskEmployees(prev => prev.filter((_, j) => j !== i))} className="hover:text-red-500 ml-1">×</button>
                                         </span>
                                     ))}
                                 </div>
@@ -365,7 +365,7 @@ export function KanbanPage() {
                                             setNewTaskEmployees(prev => [...prev, e.target.value])
                                         }
                                     }}
-                                    className="block w-full px-3.5 py-3 border-[2px] border-black rounded-xl bg-white text-sm font-bold text-black focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
                                 >
                                     <option value="">+ Agregar Empleado</option>
                                     {employees
@@ -378,11 +378,11 @@ export function KanbanPage() {
                                     }
                                 </select>
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex gap-4">
                                 <div className="flex-1">
-                                    <label className="text-xs font-extrabold uppercase text-hc-accent block mb-1.5 border-l-[3px] border-hc-accent pl-2">Prioridad</label>
+                                    <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Prioridad</label>
                                     <select value={newTaskPriority} onChange={(e) => setNewTaskPriority(e.target.value as TaskPriority)}
-                                        className="block w-full px-3 py-3 border-[2px] border-black rounded-xl bg-white text-sm font-bold text-black focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
+                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
                                     >
                                         <option value="baja">🟢 Baja</option>
                                         <option value="media">🟡 Normal</option>
@@ -390,17 +390,17 @@ export function KanbanPage() {
                                     </select>
                                 </div>
                                 <div className="flex-1">
-                                    <label className="text-xs font-extrabold uppercase text-hc-accent block mb-1.5 border-l-[3px] border-hc-accent pl-2">Fecha</label>
+                                    <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Fecha Límite</label>
                                     <input type="date" value={newTaskDueDate} onChange={(e) => setNewTaskDueDate(e.target.value)}
-                                        className="block w-full px-3 py-3 border-[2px] border-black rounded-xl bg-white text-sm font-bold text-black focus:border-hc-accent focus:ring-0 focus:outline-none transition-colors"
+                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
                                     />
                                 </div>
                             </div>
                             <button
                                 onClick={handleCreate} disabled={!newTaskTitle.trim()}
-                                className="w-full py-3.5 px-4 border-[3px] border-black bg-hc-accent text-white font-black text-base uppercase rounded-xl shadow-[3px_3px_0px_0px_#000000] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed mt-1"
+                                className="w-full py-3 bg-navy-900 text-white font-bold text-sm uppercase rounded-lg shadow-lg hover:bg-navy-800 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                             >
-                                <span className="material-symbols-outlined text-xl icon-filled">check_circle</span>
+                                <span className="material-symbols-outlined text-lg icon-filled">check_circle</span>
                                 Crear Tarea
                             </button>
                         </div>
