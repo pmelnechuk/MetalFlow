@@ -7,6 +7,7 @@ import { cn } from '../lib/utils'
 export function AttendancePage() {
     const { employees = [] } = useEmployees() // Ensure default
     const { logs = [], fetchDailyLogs, checkIn, checkOut, updateLog, getWeeklyLogs, deleteLog } = useAttendance() // Ensure default
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
     const [currentTime, setCurrentTime] = useState(new Date())
     const [editingLog, setEditingLog] = useState<any>(null)
     const [editForm, setEditForm] = useState({ check_in: '', check_out: '' })
@@ -15,6 +16,19 @@ export function AttendancePage() {
     const [showReport, setShowReport] = useState(false)
     const [reportData, setReportData] = useState<any[]>([])
     const [reportRange, setReportRange] = useState({ start: '', end: '' })
+
+    // ... (keep handleGenerateReport as is) ...
+
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSelectedDate(e.target.value)
+    }
+
+    // Effect to fetch logs when selectedDate changes
+    useEffect(() => {
+        fetchDailyLogs(selectedDate)
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+        return () => clearInterval(timer)
+    }, [fetchDailyLogs, selectedDate])
 
     const handleGenerateReport = async () => {
         const today = new Date()
@@ -259,8 +273,16 @@ export function AttendancePage() {
 
                 {/* Daily Log Table */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                        <h3 className="font-bold text-navy-900 uppercase">Registros de Hoy</h3>
+                    <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div className="flex items-center gap-4">
+                            <h3 className="font-bold text-navy-900 uppercase">Registros del Día</h3>
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={handleDateChange}
+                                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-navy-900 focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
+                            />
+                        </div>
                         <span className="text-xs font-medium text-gray-500">
                             {logs?.length || 0} registros
                         </span>
