@@ -124,7 +124,7 @@ export function EmployeesPage() {
                                     <div className="w-10 h-10 rounded-full bg-navy-50 flex items-center justify-center text-navy-700 font-bold text-lg">
                                         {employee.first_name[0]}{employee.last_name[0]}
                                     </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => handleEdit(employee)} className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-navy-900">
                                             <span className="material-symbols-outlined text-lg">edit</span>
                                         </button>
