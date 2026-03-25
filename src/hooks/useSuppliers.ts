@@ -94,6 +94,7 @@ export function useSuppliers() {
         const statsMap = new Map<string, { total_spent: number; purchase_count: number; last_purchase_date: string | null }>()
 
         for (const p of (purchasesData || [])) {
+            if (!p.supplier_id) continue
             const existing = statsMap.get(p.supplier_id) || { total_spent: 0, purchase_count: 0, last_purchase_date: null }
             existing.total_spent += (p.unit_price ?? 0) * (p.quantity ?? 1)
             existing.purchase_count += 1
