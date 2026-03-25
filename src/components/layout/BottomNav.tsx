@@ -6,6 +6,7 @@ const tabs = [
     { path: '/tablero', icon: 'view_kanban', label: 'Tablero' },
     { path: '/empleados', icon: 'groups', label: 'Personal' },
     { path: '/asistencia', icon: 'schedule', label: 'Asistencia' },
+    { path: '/compras', icon: 'shopping_cart', label: 'Compras' },
     { path: '/ajustes', icon: 'settings', label: 'Ajustes' },
 ]
 

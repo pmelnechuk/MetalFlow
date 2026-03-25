@@ -5,6 +5,7 @@ import { KanbanPage } from './pages/KanbanPage'
 import { EmployeesPage } from './pages/EmployeesPage'
 import { AttendancePage } from './pages/AttendancePage'
 import { SettingsPage } from './pages/SettingsPage'
+import { ComprasPage } from './pages/ComprasPage'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="/tablero" element={<KanbanPage />} />
           <Route path="/empleados" element={<EmployeesPage />} />
           <Route path="/asistencia" element={<AttendancePage />} />
+          <Route path="/compras" element={<ComprasPage />} />
           <Route path="/ajustes" element={<SettingsPage />} />
         </Route>
       </Routes>

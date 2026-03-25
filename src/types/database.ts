@@ -191,6 +191,90 @@ export type Database = {
                     },
                 ]
             }
+            suppliers: {
+                Row: {
+                    id: string
+                    name: string
+                    category: string
+                    phone: string | null
+                    notes: string | null
+                    created_at: string | null
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    category?: string
+                    phone?: string | null
+                    notes?: string | null
+                    created_at?: string | null
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    category?: string
+                    phone?: string | null
+                    notes?: string | null
+                    created_at?: string | null
+                }
+                Relationships: []
+            }
+            purchases: {
+                Row: {
+                    id: string
+                    description: string
+                    quantity: number
+                    unit: string | null
+                    supplier_id: string | null
+                    project_id: string | null
+                    status: Database["public"]["Enums"]["purchase_status"]
+                    unit_price: number | null
+                    date_purchased: string | null
+                    notes: string | null
+                    created_at: string | null
+                }
+                Insert: {
+                    id?: string
+                    description: string
+                    quantity?: number
+                    unit?: string | null
+                    supplier_id?: string | null
+                    project_id?: string | null
+                    status?: Database["public"]["Enums"]["purchase_status"]
+                    unit_price?: number | null
+                    date_purchased?: string | null
+                    notes?: string | null
+                    created_at?: string | null
+                }
+                Update: {
+                    id?: string
+                    description?: string
+                    quantity?: number
+                    unit?: string | null
+                    supplier_id?: string | null
+                    project_id?: string | null
+                    status?: Database["public"]["Enums"]["purchase_status"]
+                    unit_price?: number | null
+                    date_purchased?: string | null
+                    notes?: string | null
+                    created_at?: string | null
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "purchases_supplier_id_fkey"
+                        columns: ["supplier_id"]
+                        isOneToOne: false
+                        referencedRelation: "suppliers"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "purchases_project_id_fkey"
+                        columns: ["project_id"]
+                        isOneToOne: false
+                        referencedRelation: "projects"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
             task_attachments: {
                 Row: {
                     id: string
@@ -236,6 +320,7 @@ export type Database = {
             project_status: "activo" | "inactivo"
             task_priority: "alta" | "media" | "baja"
             task_status: "backlog" | "por_hacer" | "en_proceso" | "terminado"
+            purchase_status: "pendiente" | "comprado" | "cancelado"
         }
         CompositeTypes: Record<string, never>
     }
@@ -253,3 +338,15 @@ export type Task = Database["public"]["Tables"]["tasks"]["Row"] & {
 }
 export type AttendanceLog = Database["public"]["Tables"]["attendance_logs"]["Row"]
 export type TaskAttachment = Database["public"]["Tables"]["task_attachments"]["Row"]
+
+export type PurchaseStatus = Database["public"]["Enums"]["purchase_status"]
+export type Supplier = Database["public"]["Tables"]["suppliers"]["Row"]
+export type Purchase = Database["public"]["Tables"]["purchases"]["Row"] & {
+    supplier?: Supplier | null
+    project?: Project | null
+}
+export type SupplierWithStats = Supplier & {
+    total_spent: number
+    purchase_count: number
+    last_purchase_date: string | null
+}
