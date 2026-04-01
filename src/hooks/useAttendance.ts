@@ -91,7 +91,7 @@ export function useAttendance() {
         }
     }
 
-    const updateLog = async (logId: string, updates: { check_in?: string; check_out?: string }) => {
+    const updateLog = async (logId: string, updates: { check_in?: string; check_out?: string }, refreshDate?: string) => {
         try {
             const finalUpdates: any = { ...updates }
 
@@ -109,7 +109,7 @@ export function useAttendance() {
                 .single()
 
             if (error) throw error
-            await fetchDailyLogs()
+            await fetchDailyLogs(refreshDate)
             return data
         } catch (error) {
             console.error('Error updating log:', error)
@@ -170,7 +170,7 @@ export function useAttendance() {
         }
     }
 
-    const deleteLog = async (logId: string) => {
+    const deleteLog = async (logId: string, refreshDate?: string) => {
         try {
             const { error } = await supabase
                 .from('attendance_logs')
@@ -178,7 +178,7 @@ export function useAttendance() {
                 .eq('id', logId)
 
             if (error) throw error
-            await fetchDailyLogs() // Refresh logs
+            await fetchDailyLogs(refreshDate)
         } catch (error) {
             console.error('Error deleting log:', error)
             throw error

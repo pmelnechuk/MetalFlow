@@ -141,7 +141,7 @@ export function AttendancePage() {
             await updateLog(editingLog.id, {
                 check_in: toISO(editForm.check_in)!,
                 check_out: editForm.check_out ? toISO(editForm.check_out)! : undefined
-            })
+            }, selectedDate)
             setEditingLog(null)
         } catch (error) {
             console.error(error)
@@ -151,18 +151,12 @@ export function AttendancePage() {
     const handleDeleteLog = async (id: string) => {
         if (confirm('¿Estás seguro de eliminar este registro de asistencia?')) {
             try {
-                await deleteLog(id)
+                await deleteLog(id, selectedDate)
             } catch (error) {
                 console.error(error)
             }
         }
     }
-
-    useEffect(() => {
-        fetchDailyLogs()
-        const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-        return () => clearInterval(timer)
-    }, [fetchDailyLogs])
 
     const getEmployeeStatus = (employeeId: string) => {
         if (!Array.isArray(logs)) return 'pending'
