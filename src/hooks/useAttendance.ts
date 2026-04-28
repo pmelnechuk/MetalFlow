@@ -47,25 +47,28 @@ export function useAttendance() {
         return status
     }
 
-    const checkIn = async (employeeId: string) => {
-        const today = new Date().toISOString().split('T')[0]
-        const now = new Date()
-        const status = calculateStatus(now)
+    const checkIn = async (employeeId: string, date?: string) => {
+        const targetDate = date ?? new Date().toISOString().split('T')[0]
+        const [year, month, day] = targetDate.split('-').map(Number)
+        const checkInTime = date
+            ? new Date(year, month - 1, day, 7, 0, 0)
+            : new Date()
+        const status = calculateStatus(checkInTime)
 
         try {
             const { data, error } = await supabase
                 .from('attendance_logs')
                 .insert({
                     employee_id: employeeId,
-                    date: today,
-                    check_in: now.toISOString(),
+                    date: targetDate,
+                    check_in: checkInTime.toISOString(),
                     status: status
                 })
                 .select()
                 .single()
 
             if (error) throw error
-            await fetchDailyLogs(today)
+            await fetchDailyLogs(targetDate)
             return data
         } catch (error) {
             console.error('Error checking in:', error)
@@ -73,7 +76,7 @@ export function useAttendance() {
         }
     }
 
-    const checkOut = async (logId: string) => {
+    const checkOut = async (logId: string, refreshDate?: string) => {
         try {
             const { data, error } = await supabase
                 .from('attendance_logs')
@@ -83,7 +86,7 @@ export function useAttendance() {
                 .single()
 
             if (error) throw error
-            await fetchDailyLogs() // Refresh
+            await fetchDailyLogs(refreshDate)
             return data
         } catch (error) {
             console.error('Error checking out:', error)

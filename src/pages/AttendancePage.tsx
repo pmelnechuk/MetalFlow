@@ -169,10 +169,10 @@ export function AttendancePage() {
     const handleAction = async (employeeId: string) => {
         const status = getEmployeeStatus(employeeId)
         if (status === 'pending') {
-            await checkIn(employeeId)
+            await checkIn(employeeId, selectedDate)
         } else if (status === 'working') {
             const log = logs.find(l => l.employee_id === employeeId)
-            if (log) await checkOut(log.id)
+            if (log) await checkOut(log.id, selectedDate)
         }
     }
 
