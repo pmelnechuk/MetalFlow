@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { toLocalDateStr } from '../lib/utils'
 import type { AttendanceLog } from '../types/database'
 
 export function useAttendance() {
@@ -7,7 +8,7 @@ export function useAttendance() {
     const [loading, setLoading] = useState(true)
 
     // Fetch logs for a specific date (defaults to today)
-    const fetchDailyLogs = useCallback(async (date: string = new Date().toISOString().split('T')[0]) => {
+    const fetchDailyLogs = useCallback(async (date: string = toLocalDateStr()) => {
         try {
             setLoading(true)
             const { data, error } = await supabase
@@ -48,7 +49,7 @@ export function useAttendance() {
     }
 
     const checkIn = async (employeeId: string, date?: string) => {
-        const targetDate = date ?? new Date().toISOString().split('T')[0]
+        const targetDate = date ?? toLocalDateStr()
         const [year, month, day] = targetDate.split('-').map(Number)
         const checkInTime = date
             ? new Date(year, month - 1, day, 7, 0, 0)

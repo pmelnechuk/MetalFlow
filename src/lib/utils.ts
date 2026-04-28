@@ -2,9 +2,20 @@ export function cn(...classes: (string | false | null | undefined)[]): string {
     return classes.filter(Boolean).join(' ')
 }
 
+// Returns today's date as YYYY-MM-DD using local time (avoids UTC midnight shift).
+export function toLocalDateStr(date: Date = new Date()): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+// Parses a YYYY-MM-DD string as local midnight to avoid UTC offset issues.
+export function parseDateLocal(dateStr: string): Date {
+    const [y, m, d] = dateStr.split('-').map(Number)
+    return new Date(y, m - 1, d)
+}
+
 export function formatDate(dateStr: string | null): string {
     if (!dateStr) return ''
-    const date = new Date(dateStr)
+    const date = parseDateLocal(dateStr)
     const months = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC']
     return `${date.getDate().toString().padStart(2, '0')} ${months[date.getMonth()]}`
 }

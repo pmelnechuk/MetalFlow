@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react'
 import { useEmployees } from '../hooks/useEmployees'
 import { useAttendance } from '../hooks/useAttendance'
 import { TopBar } from '../components/layout/TopBar'
-import { cn } from '../lib/utils'
+import { cn, toLocalDateStr, parseDateLocal } from '../lib/utils'
 
 export function AttendancePage() {
     const { employees = [] } = useEmployees() // Ensure default
     const { logs = [], fetchDailyLogs, checkIn, checkOut, updateLog, getWeeklyLogs, deleteLog } = useAttendance() // Ensure default
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+    const [selectedDate, setSelectedDate] = useState(toLocalDateStr())
     const [currentTime, setCurrentTime] = useState(new Date())
     const [editingLog, setEditingLog] = useState<any>(null)
     const [editForm, setEditForm] = useState({ check_in: '', check_out: '' })
@@ -31,11 +31,13 @@ export function AttendancePage() {
     }, [fetchDailyLogs, selectedDate])
 
     const handleGenerateReport = async () => {
-        const today = new Date()
-        const day = today.getDay()
-        const diff = today.getDate() - day + (day === 0 ? -6 : 1) // Adjust when day is Sunday
-        const monday = new Date(today.setDate(diff)).toISOString().split('T')[0]
-        const friday = new Date(today.setDate(diff + 4)).toISOString().split('T')[0]
+        const base = parseDateLocal(selectedDate)
+        const day = base.getDay()
+        const diff = base.getDate() - day + (day === 0 ? -6 : 1)
+        const mondayDate = new Date(base.getFullYear(), base.getMonth(), diff)
+        const fridayDate = new Date(base.getFullYear(), base.getMonth(), diff + 4)
+        const monday = toLocalDateStr(mondayDate)
+        const friday = toLocalDateStr(fridayDate)
 
         setReportRange({ start: monday, end: friday })
         const data = await getWeeklyLogs(monday, friday)
@@ -429,8 +431,7 @@ export function AttendancePage() {
                                     <tr>
                                         <th className="border border-black p-1 bg-gray-100 w-1/4">Empleado</th>
                                         {['Lun', 'Mar', 'Mié', 'Jue', 'Vie'].map((day, i) => {
-                                            // Calculate date for header
-                                            const d = new Date(reportRange.start)
+                                            const d = parseDateLocal(reportRange.start)
                                             d.setDate(d.getDate() + i)
                                             return (
                                                 <th key={day} className="border border-black p-1 bg-gray-100 text-center">
@@ -451,10 +452,9 @@ export function AttendancePage() {
                                                 <div className="text-[9px] font-normal text-gray-500">{item.employee.role}</div>
                                             </td>
                                             {Array.from({ length: 5 }).map((_, i) => {
-                                                // Fix timezone issue by treating string strictly as YYYY-MM-DD
-                                                const [y, m, day] = reportRange.start.split('-').map(Number)
-                                                const current = new Date(y, m - 1, day + i)
-                                                const dateStr = current.toISOString().split('T')[0]
+                                                const current = parseDateLocal(reportRange.start)
+                                                current.setDate(current.getDate() + i)
+                                                const dateStr = toLocalDateStr(current)
                                                 const log = item.logs[dateStr]
 
                                                 return (
