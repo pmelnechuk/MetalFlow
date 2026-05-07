@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { toLocalDateStr } from '../lib/utils'
+import { toLocalDateStr, parseDateLocal } from '../lib/utils'
 import type { AttendanceLog } from '../types/database'
 
 export function useAttendance() {
@@ -50,9 +50,8 @@ export function useAttendance() {
 
     const checkIn = async (employeeId: string, date?: string) => {
         const targetDate = date ?? toLocalDateStr()
-        const [year, month, day] = targetDate.split('-').map(Number)
         const checkInTime = date
-            ? new Date(year, month - 1, day, 7, 0, 0)
+            ? (() => { const d = parseDateLocal(targetDate); d.setHours(7, 0, 0, 0); return d })()
             : new Date()
         const status = calculateStatus(checkInTime)
 

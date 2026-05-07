@@ -1,3 +1,4 @@
+import { toLocalDateStr } from './utils'
 import type { TaskPriority } from '../types/database'
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
@@ -158,7 +159,7 @@ export async function extractTaskFromAudio(audioBlob: Blob): Promise<AITaskExtra
     if (!GEMINI_API_KEY) throw new Error('API Key de Gemini no configurada')
 
     const base64 = await blobToBase64(audioBlob)
-    const today = new Date().toISOString().split('T')[0]
+    const today = toLocalDateStr()
 
     const data = await callGemini({
         system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
@@ -177,7 +178,7 @@ export async function extractTaskFromAudio(audioBlob: Blob): Promise<AITaskExtra
 export async function extractTaskFromText(text: string): Promise<AITaskExtraction> {
     if (!GEMINI_API_KEY) throw new Error('API Key de Gemini no configurada')
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = toLocalDateStr()
 
     const data = await callGemini({
         system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },

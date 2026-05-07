@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTasks } from '../../hooks/useTasks'
 import { useProjects } from '../../hooks/useProjects'
 import { TopBar } from '../layout/TopBar'
+import { toLocalDateStr } from '../../lib/utils'
 import type { TaskPriority } from '../../types/database'
 
 export function AIReviewScreen() {
@@ -17,7 +18,7 @@ export function AIReviewScreen() {
         project: 'SIN PROYECTO',
         task: 'TAREA SIN NOMBRE',
         priority: 'media',
-        due_date: new Date().toISOString().split('T')[0],
+        due_date: toLocalDateStr(),
     }
 
     const confidence = aiResult?.confidence ?? null

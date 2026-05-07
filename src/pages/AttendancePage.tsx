@@ -23,11 +23,13 @@ export function AttendancePage() {
         setSelectedDate(e.target.value)
     }
 
-    // Effect to fetch logs when selectedDate changes
     useEffect(() => {
-        fetchDailyLogs(selectedDate)
         const timer = setInterval(() => setCurrentTime(new Date()), 1000)
         return () => clearInterval(timer)
+    }, [])
+
+    useEffect(() => {
+        fetchDailyLogs(selectedDate)
     }, [fetchDailyLogs, selectedDate])
 
     const handleGenerateReport = async () => {
@@ -123,21 +125,12 @@ export function AttendancePage() {
         try {
             const datePrefix = editingLog.date // "YYYY-MM-DD"
 
-            // Helper to combine date + time string into ISO
             const toISO = (timeStr: string) => {
                 if (!timeStr) return null
-                const [hours, minutes] = timeStr.split(':')
-                const d = new Date(datePrefix)
-                d.setHours(parseInt(hours), parseInt(minutes))
-                // Adjust for local timezone offset if needed, but for simplicity relying on local time rendering
-                // Better approach: construct date object in local time then toISOString, 
-                // but since we receive YYYY-MM-DD from DB which is UTC 00:00 usually, we need to be careful.
-                // Simplified: use current date object, set date to log date, set time.
-                const fullDate = new Date()
-                const [year, month, day] = datePrefix.split('-')
-                fullDate.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day))
-                fullDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-                return fullDate.toISOString()
+                const [hours, minutes] = timeStr.split(':').map(Number)
+                const d = parseDateLocal(datePrefix)
+                d.setHours(hours, minutes, 0, 0)
+                return d.toISOString()
             }
 
             await updateLog(editingLog.id, {
@@ -445,16 +438,19 @@ export function AttendancePage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {reportData.map((item: any) => (
+                                    {(() => {
+                                        const weekDates = Array.from({ length: 5 }, (_, i) => {
+                                            const d = parseDateLocal(reportRange.start)
+                                            d.setDate(d.getDate() + i)
+                                            return toLocalDateStr(d)
+                                        })
+                                        return reportData.map((item: any) => (
                                         <tr key={item.employee.id}>
                                             <td className="border border-black p-2 font-bold uppercase">
                                                 {item.employee.last_name}, {item.employee.first_name}
                                                 <div className="text-[9px] font-normal text-gray-500">{item.employee.role}</div>
                                             </td>
-                                            {Array.from({ length: 5 }).map((_, i) => {
-                                                const current = parseDateLocal(reportRange.start)
-                                                current.setDate(current.getDate() + i)
-                                                const dateStr = toLocalDateStr(current)
+                                            {weekDates.map((dateStr, i) => {
                                                 const log = item.logs[dateStr]
 
                                                 return (
@@ -476,7 +472,8 @@ export function AttendancePage() {
                                             </td>
                                             <td className="border border-black p-1"></td>
                                         </tr>
-                                    ))}
+                                    ))
+                                    })()}
                                 </tbody>
                             </table>
 
