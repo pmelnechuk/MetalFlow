@@ -1,19 +1,32 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useProjects } from '../hooks/useProjects'
 import { useRealtimeTasks } from '../hooks/useRealtimeTasks'
 import { ProjectCard } from '../components/projects/ProjectCard'
 import { ProjectForm } from '../components/projects/ProjectForm'
 import { TopBar } from '../components/layout/TopBar'
 import { cn } from '../lib/utils'
+import { supabase } from '../lib/supabase'
+import type { ProjectCost } from '../types/database'
 
 export function ProjectsPage() {
     const { projects, loading, filter, setFilter, createProject, updateProject, deleteProject, searchProjects, refetch } = useProjects()
+    const [costMap, setCostMap] = useState<Map<string, number>>(new Map())
     const [showForm, setShowForm] = useState(false)
     const [editingProject, setEditingProject] = useState<{ id: string; name: string; client: string } | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
     useRealtimeTasks(useCallback(() => { refetch() }, [refetch]))
+
+    useEffect(() => {
+        ;(supabase as any).from('project_costs').select('id, total_cost').then(({ data }: { data: Pick<ProjectCost, 'id' | 'total_cost'>[] | null }) => {
+            if (data) {
+                const map = new Map<string, number>()
+                for (const row of data) map.set(row.id, row.total_cost)
+                setCostMap(map)
+            }
+        })
+    }, [projects])
 
     const handleSearch = (query: string) => {
         setSearchQuery(query)
@@ -140,6 +153,7 @@ export function ProjectsPage() {
                             >
                                 <ProjectCard
                                     project={project}
+                                    totalCost={costMap.get(project.id)}
                                     onPress={() => setEditingProject({ id: project.id, name: project.name, client: project.client })}
                                 />
                             </div>

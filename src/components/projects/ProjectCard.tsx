@@ -1,14 +1,15 @@
-import { formatDate } from '../../lib/utils'
+import { formatDate, formatCurrency } from '../../lib/utils'
 import type { Project } from '../../types/database'
 
 interface ProjectCardProps {
     project: Project
     taskCount?: number
     highPriority?: boolean
+    totalCost?: number
     onPress?: () => void
 }
 
-export function ProjectCard({ project, taskCount, highPriority, onPress }: ProjectCardProps) {
+export function ProjectCard({ project, taskCount, highPriority, totalCost, onPress }: ProjectCardProps) {
     const isPaused = project.status === 'inactivo'
 
     return (
@@ -46,6 +47,12 @@ export function ProjectCard({ project, taskCount, highPriority, onPress }: Proje
                             <div className="flex items-center gap-1 text-navy-600 font-bold">
                                 <span className="material-symbols-outlined text-base">task</span>
                                 <span>{taskCount}</span>
+                            </div>
+                        )}
+                        {totalCost !== undefined && totalCost > 0 && (
+                            <div className="flex items-center gap-1 text-red-600 font-bold">
+                                <span className="material-symbols-outlined text-base">payments</span>
+                                <span>{formatCurrency(totalCost)}</span>
                             </div>
                         )}
                     </div>

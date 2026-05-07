@@ -313,6 +313,44 @@ export type Database = {
                     }
                 ]
             }
+            entities: {
+                Row: { id: string; name: string; color: string; created_at: string | null }
+                Insert: { id?: string; name: string; color?: string; created_at?: string | null }
+                Update: { id?: string; name?: string; color?: string; created_at?: string | null }
+                Relationships: []
+            }
+            accounts: {
+                Row: { id: string; entity_id: string; name: string; type: string; initial_balance: number; currency: string; active: boolean; created_at: string | null }
+                Insert: { id?: string; entity_id: string; name: string; type: string; initial_balance?: number; currency?: string; active?: boolean; created_at?: string | null }
+                Update: { id?: string; entity_id?: string; name?: string; type?: string; initial_balance?: number; currency?: string; active?: boolean; created_at?: string | null }
+                Relationships: [{ foreignKeyName: "accounts_entity_id_fkey"; columns: ["entity_id"]; isOneToOne: false; referencedRelation: "entities"; referencedColumns: ["id"] }]
+            }
+            expense_categories: {
+                Row: { id: string; name: string; color: string; icon: string }
+                Insert: { id?: string; name: string; color?: string; icon?: string }
+                Update: { id?: string; name?: string; color?: string; icon?: string }
+                Relationships: []
+            }
+            inventory_items: {
+                Row: { id: string; name: string; unit: string; stock_min: number; description: string | null; active: boolean; created_at: string | null }
+                Insert: { id?: string; name: string; unit: string; stock_min?: number; description?: string | null; active?: boolean; created_at?: string | null }
+                Update: { id?: string; name?: string; unit?: string; stock_min?: number; description?: string | null; active?: boolean; created_at?: string | null }
+                Relationships: []
+            }
+            movements: {
+                Row: { id: string; entity_id: string; account_id: string; type: string; amount: number; date: string; description: string | null; category_id: string | null; project_id: string | null; employee_id: string | null; inventory_item_id: string | null; inventory_qty: number | null; transfer_pair_id: string | null; purchase_id: string | null; created_at: string | null }
+                Insert: { id?: string; entity_id: string; account_id: string; type: string; amount: number; date?: string; description?: string | null; category_id?: string | null; project_id?: string | null; employee_id?: string | null; inventory_item_id?: string | null; inventory_qty?: number | null; transfer_pair_id?: string | null; purchase_id?: string | null; created_at?: string | null }
+                Update: { id?: string; entity_id?: string; account_id?: string; type?: string; amount?: number; date?: string; description?: string | null; category_id?: string | null; project_id?: string | null; employee_id?: string | null; inventory_item_id?: string | null; inventory_qty?: number | null; transfer_pair_id?: string | null; purchase_id?: string | null; created_at?: string | null }
+                Relationships: [
+                    { foreignKeyName: "movements_entity_id_fkey"; columns: ["entity_id"]; isOneToOne: false; referencedRelation: "entities"; referencedColumns: ["id"] },
+                    { foreignKeyName: "movements_account_id_fkey"; columns: ["account_id"]; isOneToOne: false; referencedRelation: "accounts"; referencedColumns: ["id"] },
+                    { foreignKeyName: "movements_category_id_fkey"; columns: ["category_id"]; isOneToOne: false; referencedRelation: "expense_categories"; referencedColumns: ["id"] },
+                    { foreignKeyName: "movements_project_id_fkey"; columns: ["project_id"]; isOneToOne: false; referencedRelation: "projects"; referencedColumns: ["id"] },
+                    { foreignKeyName: "movements_employee_id_fkey"; columns: ["employee_id"]; isOneToOne: false; referencedRelation: "employees"; referencedColumns: ["id"] },
+                    { foreignKeyName: "movements_inventory_item_id_fkey"; columns: ["inventory_item_id"]; isOneToOne: false; referencedRelation: "inventory_items"; referencedColumns: ["id"] },
+                    { foreignKeyName: "movements_purchase_id_fkey"; columns: ["purchase_id"]; isOneToOne: false; referencedRelation: "purchases"; referencedColumns: ["id"] }
+                ]
+            }
         }
         Views: Record<string, never>
         Functions: Record<string, never>
@@ -325,6 +363,94 @@ export type Database = {
         CompositeTypes: Record<string, never>
     }
 }
+
+// ─── New table types (finanzas module) ───────────────────────────────────────
+
+export type Entity = {
+    id: string
+    name: string
+    color: string
+    created_at: string | null
+}
+
+export type Account = {
+    id: string
+    entity_id: string
+    name: string
+    type: 'cash' | 'bank' | 'digital'
+    initial_balance: number
+    currency: string
+    active: boolean
+    created_at: string | null
+}
+
+export type ExpenseCategory = {
+    id: string
+    name: string
+    color: string
+    icon: string
+}
+
+export type InventoryItem = {
+    id: string
+    name: string
+    unit: string
+    stock_min: number
+    description: string | null
+    active: boolean
+    created_at: string | null
+}
+
+export type MovementType =
+    | 'gasto'
+    | 'ingreso'
+    | 'compra_insumo'
+    | 'pago_sueldo'
+    | 'consumo_insumo'
+    | 'transferencia'
+
+export type Movement = {
+    id: string
+    entity_id: string
+    account_id: string
+    type: MovementType
+    amount: number
+    date: string
+    description: string | null
+    category_id: string | null
+    project_id: string | null
+    employee_id: string | null
+    inventory_item_id: string | null
+    inventory_qty: number | null
+    transfer_pair_id: string | null
+    purchase_id: string | null
+    created_at: string | null
+    // joined relations
+    account?: Account & { entity?: Entity }
+    category?: ExpenseCategory | null
+    project?: Pick<Project, 'id' | 'name' | 'client'> | null
+    employee?: Pick<Employee, 'id' | 'first_name' | 'last_name'> | null
+    inventory_item?: Pick<InventoryItem, 'id' | 'name' | 'unit'> | null
+}
+
+export type AccountWithBalance = Account & {
+    entity_name: string
+    entity_color: string
+    balance: number
+}
+
+export type InventoryStock = InventoryItem & {
+    stock_current: number
+}
+
+export type ProjectCost = Pick<Project, 'id' | 'name' | 'client' | 'status'> & {
+    total_cost: number
+    materials_cost: number
+    labor_cost: number
+    movement_count: number
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Convenience types
 export type TaskPriority = Database["public"]["Enums"]["task_priority"]

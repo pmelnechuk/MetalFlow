@@ -6,6 +6,7 @@ import { EmployeesPage } from './pages/EmployeesPage'
 import { AttendancePage } from './pages/AttendancePage'
 import { SettingsPage } from './pages/SettingsPage'
 import { ComprasPage } from './pages/ComprasPage'
+import { FinanzasPage } from './pages/FinanzasPage'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/empleados" element={<EmployeesPage />} />
           <Route path="/asistencia" element={<AttendancePage />} />
           <Route path="/compras" element={<ComprasPage />} />
+          <Route path="/finanzas" element={<FinanzasPage />} />
           <Route path="/ajustes" element={<SettingsPage />} />
         </Route>
       </Routes>

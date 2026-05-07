@@ -4,9 +4,9 @@ import { cn } from '../../lib/utils'
 const tabs = [
     { path: '/', icon: 'folder_open', label: 'Proyectos' },
     { path: '/tablero', icon: 'view_kanban', label: 'Tablero' },
-    { path: '/empleados', icon: 'groups', label: 'Personal' },
     { path: '/asistencia', icon: 'schedule', label: 'Asistencia' },
     { path: '/compras', icon: 'shopping_cart', label: 'Compras' },
+    { path: '/finanzas', icon: 'account_balance_wallet', label: 'Finanzas' },
     { path: '/ajustes', icon: 'settings', label: 'Ajustes' },
 ]
 

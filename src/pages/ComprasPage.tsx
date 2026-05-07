@@ -8,6 +8,9 @@ import { SupplierModal } from '../components/compras/SupplierModal'
 import { usePurchases } from '../hooks/usePurchases'
 import { useSuppliers } from '../hooks/useSuppliers'
 import { useProjects } from '../hooks/useProjects'
+import { useAccounts } from '../hooks/useAccounts'
+import { useInventory } from '../hooks/useInventory'
+import { useMovements } from '../hooks/useMovements'
 import { cn } from '../lib/utils'
 import type { Purchase, Supplier, SupplierWithStats, PurchaseStatus } from '../types/database'
 
@@ -25,6 +28,9 @@ export function ComprasPage() {
     const { purchases, loading: purchasesLoading, statusFilter, setStatusFilter, setSupplierFilter, createPurchase, updatePurchase, markAsBought, deletePurchase } = usePurchases()
     const { suppliers, loading: suppliersLoading, createSupplier, updateSupplier, deleteSupplier, getSuppliersWithStats } = useSuppliers()
     const { allProjects } = useProjects()
+    const { accounts } = useAccounts()
+    const { items: inventoryItems } = useInventory()
+    const { createMovement } = useMovements()
 
     const [suppliersWithStats, setSuppliersWithStats] = useState<SupplierWithStats[]>([])
     const [statsLoading, setStatsLoading] = useState(false)
@@ -77,9 +83,33 @@ export function ComprasPage() {
         if (activeTab === 'proveedores') loadStats()
     }
 
-    const handleMarkBought = async (unit_price: number) => {
+    const handleMarkBought = async (unit_price: number, movementData?: {
+        account_id: string
+        entity_id: string
+        inventory_item_id?: string
+        inventory_qty?: number
+    }) => {
         if (!buyPurchase) return
-        await markAsBought(buyPurchase.id, unit_price)
+        const updated = await markAsBought(buyPurchase.id, unit_price)
+        if (updated && movementData) {
+            const today = new Date().toISOString().split('T')[0]
+            const movement = await createMovement({
+                entity_id: movementData.entity_id,
+                account_id: movementData.account_id,
+                type: 'compra_insumo',
+                amount: unit_price * (buyPurchase.quantity ?? 1),
+                date: today,
+                description: buyPurchase.description,
+                project_id: buyPurchase.project_id || undefined,
+                inventory_item_id: movementData.inventory_item_id,
+                inventory_qty: movementData.inventory_qty,
+                purchase_id: buyPurchase.id,
+            })
+            if (movement) {
+                const mov = movement as unknown as { id: string }
+                await updatePurchase(buyPurchase.id, { movement_id: mov.id } as any)
+            }
+        }
         setBuyPurchase(null)
         loadStats()
     }
@@ -276,6 +306,8 @@ export function ComprasPage() {
             {buyPurchase && (
                 <BuyModal
                     purchase={buyPurchase}
+                    accounts={accounts}
+                    inventoryItems={inventoryItems}
                     onConfirm={handleMarkBought}
                     onClose={() => setBuyPurchase(null)}
                 />
