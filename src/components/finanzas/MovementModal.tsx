@@ -3,12 +3,12 @@ import type { Movement, MovementType, Account, ExpenseCategory, InventoryItem, E
 import type { Employee, Project } from '../../types/database'
 import { AccountModal } from './AccountModal'
 
-const TYPE_OPTIONS: { value: MovementType; label: string; icon: string }[] = [
-    { value: 'gasto',          label: 'Gasto general',   icon: 'payments' },
-    { value: 'ingreso',        label: 'Ingreso',         icon: 'trending_up' },
-    { value: 'compra_insumo',  label: 'Compra insumo',   icon: 'inventory_2' },
-    { value: 'pago_sueldo',    label: 'Pago sueldo',     icon: 'badge' },
-    { value: 'consumo_insumo', label: 'Consumo insumo',  icon: 'remove_circle' },
+const TYPE_OPTIONS: { value: MovementType; label: string; icon: string; sublabel: string }[] = [
+    { value: 'gasto',          label: 'Gasto',          icon: 'payments',       sublabel: 'Luz, alquiler, etc.' },
+    { value: 'ingreso',        label: 'Ingreso',        icon: 'trending_up',    sublabel: 'Cobro, venta, etc.' },
+    { value: 'compra_insumo',  label: 'Compra',         icon: 'inventory_2',    sublabel: 'Suma al stock' },
+    { value: 'pago_sueldo',    label: 'Sueldo',         icon: 'badge',          sublabel: 'Pago a empleado' },
+    { value: 'consumo_insumo', label: 'Uso material',   icon: 'remove_circle',  sublabel: 'Resta del stock' },
 ]
 
 const CATEGORY_COLORS = [
@@ -172,12 +172,13 @@ export function MovementModal({
 
                     {/* Tipo */}
                     <div>
-                        <label className="text-[10px] font-bold uppercase text-gray-500 mb-2 block tracking-wide">Tipo *</label>
+                        <label className="text-[10px] font-bold uppercase text-gray-500 mb-2 block tracking-wide">¿Qué es este movimiento?</label>
                         <div className="grid grid-cols-5 gap-1">
                             {TYPE_OPTIONS.map(opt => (
                                 <button
                                     key={opt.value}
                                     onClick={() => setType(opt.value)}
+                                    title={opt.sublabel}
                                     className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all text-center ${
                                         type === opt.value
                                             ? 'border-navy-900 bg-navy-50 text-navy-900'
@@ -189,11 +190,15 @@ export function MovementModal({
                                 </button>
                             ))}
                         </div>
+                        {/* sublabel del tipo seleccionado */}
+                        <p className="text-[11px] text-gray-400 mt-1.5 ml-0.5">
+                            {TYPE_OPTIONS.find(o => o.value === type)?.sublabel}
+                        </p>
                     </div>
 
                     {/* Entidad */}
                     <div>
-                        <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Entidad *</label>
+                        <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">¿A nombre de quién?</label>
                         <div className="flex gap-1">
                             {entities.map(en => (
                                 <button
@@ -214,7 +219,7 @@ export function MovementModal({
 
                     {/* Cuenta */}
                     <div>
-                        <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Cuenta *</label>
+                        <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">¿De qué cuenta?</label>
                         <div className="flex gap-2">
                             <select
                                 value={accountId}
@@ -244,7 +249,7 @@ export function MovementModal({
                     {/* Monto + Fecha */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Monto *</label>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Importe *</label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">$</span>
                                 <input
@@ -272,12 +277,12 @@ export function MovementModal({
 
                     {/* Descripción */}
                     <div>
-                        <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Descripción</label>
+                        <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">¿En qué se gastó? (opcional)</label>
                         <input
                             type="text"
                             value={description}
                             onChange={e => setDescription(e.target.value)}
-                            placeholder="Detalle opcional..."
+                            placeholder="Ej: Compra de chapas, pago luz..."
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none placeholder:text-gray-400"
                         />
                     </div>
@@ -285,7 +290,7 @@ export function MovementModal({
                     {/* Categoría */}
                     {needsCategory && (
                         <div>
-                            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Categoría</label>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Tipo de gasto</label>
                             <div className="flex gap-2">
                                 <select
                                     value={categoryId}
@@ -360,13 +365,13 @@ export function MovementModal({
                     {/* Proyecto */}
                     {needsProject && (
                         <div>
-                            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Proyecto</label>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">¿Es de un proyecto?</label>
                             <select
                                 value={projectId}
                                 onChange={e => setProjectId(e.target.value)}
                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
                             >
-                                <option value="">Gasto general (sin proyecto)</option>
+                                <option value="">No, es gasto general del taller</option>
                                 {projects.map(p => (
                                     <option key={p.id} value={p.id}>{p.client} — {p.name}</option>
                                 ))}
@@ -377,14 +382,14 @@ export function MovementModal({
                     {/* Empleado */}
                     {needsEmployee && (
                         <div>
-                            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Empleado</label>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">¿A quién le pagás?</label>
                             <select
                                 value={employeeId}
                                 onChange={e => setEmployeeId(e.target.value)}
                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
                             >
                                 <option value="">Seleccioná empleado</option>
-                                {employees.map(e => (
+                                {employees.filter(e => e.status === 'active').map(e => (
                                     <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>
                                 ))}
                             </select>
@@ -396,7 +401,7 @@ export function MovementModal({
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">
-                                    {type === 'compra_insumo' ? 'Ítem comprado' : 'Ítem consumido'}
+                                    {type === 'compra_insumo' ? '¿Qué material compraste?' : '¿Qué material usaste?'}
                                 </label>
                                 <select
                                     value={inventoryItemId}
