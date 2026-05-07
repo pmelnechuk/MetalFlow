@@ -13,6 +13,7 @@ import { useAccounts } from '../hooks/useAccounts'
 import { useInventory } from '../hooks/useInventory'
 import { useEntities } from '../hooks/useEntities'
 import { useExpenseCategories } from '../hooks/useExpenseCategories'
+import type { Account, ExpenseCategory } from '../types/database'
 import { useEmployees } from '../hooks/useEmployees'
 import { useProjects } from '../hooks/useProjects'
 import { cn, formatCurrency } from '../lib/utils'
@@ -41,7 +42,7 @@ export function FinanzasPage() {
     const { accounts, loading: accountsLoading, getAccountsWithBalance, createAccount, updateAccount, deleteAccount } = useAccounts()
     const { items: inventoryItems, loading: inventoryLoading, getStock, createItem, updateItem, deleteItem } = useInventory()
     const { entities } = useEntities()
-    const { categories } = useExpenseCategories()
+    const { categories, createCategory } = useExpenseCategories()
     const { employees } = useEmployees()
     const { allProjects } = useProjects()
 
@@ -352,6 +353,14 @@ export function FinanzasPage() {
                     onSave={handleSaveMovement}
                     onClose={() => { setShowMovementModal(false); setEditMovement(null) }}
                     onDelete={editMovement ? handleDeleteMovement : undefined}
+                    onCreateAccount={async (data) => {
+                        const created = await createAccount(data)
+                        return created as Account | null
+                    }}
+                    onCreateCategory={async (data) => {
+                        const created = await createCategory(data)
+                        return created as ExpenseCategory | null
+                    }}
                 />
             )}
 
