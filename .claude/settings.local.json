@@ -11,7 +11,16 @@
       "Bash(npm install *)",
       "Bash(node *)",
       "Bash(npx tsc *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(npx vitest *)",
+      "Bash(npx playwright *)",
+      "Bash(npm run *)",
+      "PowerShell(Get-Process *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Flownix\\\\MetalFlow\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost:5173/compras\" -UseBasicParsing -TimeoutSec 5 | Select-Object -ExpandProperty StatusCode)"
     ]
   }
 }

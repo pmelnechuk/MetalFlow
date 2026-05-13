@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Movement, MovementType, Account, ExpenseCategory, InventoryItem, Entity, Bank } from '../../types/database'
+import type { Movement, MovementType, Account, ExpenseCategory, InventoryItem, Entity, Bank, CreditCard } from '../../types/database'
 import type { Employee, Project } from '../../types/database'
 import { AccountModal } from './AccountModal'
 
@@ -36,6 +36,7 @@ interface Props {
     projects: Project[]
     entities: Entity[]
     banks: Bank[]
+    creditCards?: CreditCard[]
     onSave: (data: {
         entity_id: string
         account_id: string
@@ -49,16 +50,33 @@ interface Props {
         inventory_item_id?: string
         inventory_qty?: number
     }) => void
+    onSaveInstallment?: (data: {
+        credit_card_id: string
+        description: string
+        total_amount: number
+        num_installments: number
+        first_due_date: string
+        category_id?: string
+        project_id?: string
+    }) => void
     onClose: () => void
     onDelete?: () => void
     onCreateAccount: (data: { entity_id: string; name: string; type: Account['type']; initial_balance: number; currency: string }) => Promise<Account | null>
     onCreateCategory: (data: { name: string; color: string; icon: string }) => Promise<ExpenseCategory | null>
 }
 
+function nextDueDate(dueDay: number): string {
+    const today = new Date()
+    const d = new Date(today.getFullYear(), today.getMonth(), dueDay)
+    if (d <= today) d.setMonth(d.getMonth() + 1)
+    return d.toISOString().split('T')[0]
+}
+
 export function MovementModal({
     movement, accounts: accountsProp, categories: categoriesProp,
     inventoryItems, employees, projects, entities, banks,
-    onSave, onClose, onDelete, onCreateAccount, onCreateCategory,
+    creditCards = [],
+    onSave, onSaveInstallment, onClose, onDelete, onCreateAccount, onCreateCategory,
 }: Props) {
     const [type, setType]               = useState<MovementType>(movement?.type ?? 'gasto')
     const [amount, setAmount]           = useState(movement ? String(Math.abs(movement.amount)) : '')
@@ -94,6 +112,13 @@ export function MovementModal({
         if (acct && acct.entity_id !== entityId) setEntityId(acct.entity_id)
     }, [accountId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Credit card payment state (gasto / compra_insumo only)
+    const isExpenseType = type === 'gasto' || type === 'compra_insumo'
+    const [payMethod, setPayMethod] = useState<'cuenta' | 'tarjeta'>(movement ? 'cuenta' : 'cuenta')
+    const [cardId, setCardId] = useState(creditCards[0]?.id ?? '')
+    const [numInstallments, setNumInstallments] = useState('1')
+    const selectedCard = creditCards.find(c => c.id === cardId)
+
     // Inline creation states
     const [showNewAccount, setShowNewAccount]     = useState(false)
     const [showNewCategory, setShowNewCategory]   = useState(false)
@@ -109,23 +134,37 @@ export function MovementModal({
     const needsEmployee   = type === 'pago_sueldo'
     const needsInventory  = type === 'compra_insumo' || type === 'consumo_insumo'
 
-    const canSave = amount && parseFloat(amount) > 0 && accountId && entityId
+    const useCard = isExpenseType && payMethod === 'tarjeta' && !movement
+    const canSave = amount && parseFloat(amount) > 0 && entityId &&
+        (useCard ? (cardId && parseInt(numInstallments) >= 1) : !!accountId)
 
     const handleSave = () => {
         if (!canSave) return
-        onSave({
-            entity_id: entityId,
-            account_id: accountId,
-            type,
-            amount: parseFloat(amount),
-            date,
-            description: description.trim() || undefined,
-            category_id: needsCategory ? (categoryId || undefined) : undefined,
-            project_id: needsProject ? (projectId || undefined) : undefined,
-            employee_id: needsEmployee ? (employeeId || undefined) : undefined,
-            inventory_item_id: needsInventory ? (inventoryItemId || undefined) : undefined,
-            inventory_qty: needsInventory && inventoryQty ? parseFloat(inventoryQty) : undefined,
-        })
+        if (useCard && onSaveInstallment && selectedCard) {
+            onSaveInstallment({
+                credit_card_id: cardId,
+                description: description.trim() || 'Gasto tarjeta',
+                total_amount: parseFloat(amount),
+                num_installments: parseInt(numInstallments) || 1,
+                first_due_date: nextDueDate(selectedCard.due_day),
+                category_id: needsCategory ? (categoryId || undefined) : undefined,
+                project_id: needsProject ? (projectId || undefined) : undefined,
+            })
+        } else {
+            onSave({
+                entity_id: entityId,
+                account_id: accountId,
+                type,
+                amount: parseFloat(amount),
+                date,
+                description: description.trim() || undefined,
+                category_id: needsCategory ? (categoryId || undefined) : undefined,
+                project_id: needsProject ? (projectId || undefined) : undefined,
+                employee_id: needsEmployee ? (employeeId || undefined) : undefined,
+                inventory_item_id: needsInventory ? (inventoryItemId || undefined) : undefined,
+                inventory_qty: needsInventory && inventoryQty ? parseFloat(inventoryQty) : undefined,
+            })
+        }
     }
 
     const handleCreateAccount = async (data: { entity_id: string; name: string; type: Account['type']; initial_balance: number; currency: string }) => {
@@ -218,7 +257,28 @@ export function MovementModal({
                         </div>
                     </div>
 
+                    {/* Medio de pago (toggle cuenta/tarjeta para gastos) */}
+                    {isExpenseType && !movement && creditCards.length > 0 && (
+                        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+                            {(['cuenta', 'tarjeta'] as const).map(m => (
+                                <button
+                                    key={m}
+                                    onClick={() => setPayMethod(m)}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all ${
+                                        payMethod === m ? 'bg-white text-navy-900 shadow-sm' : 'text-gray-500 hover:text-navy-900'
+                                    }`}
+                                >
+                                    <span className="material-symbols-outlined text-sm">
+                                        {m === 'cuenta' ? 'account_balance' : 'credit_card'}
+                                    </span>
+                                    {m === 'cuenta' ? 'Cuenta / Efectivo' : 'Tarjeta de crédito'}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     {/* Cuenta */}
+                    {!useCard && (
                     <div>
                         <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">¿De qué cuenta?</label>
                         <div className="flex gap-2">
@@ -246,6 +306,41 @@ export function MovementModal({
                             </p>
                         )}
                     </div>
+                    )}
+
+                    {/* Tarjeta de crédito */}
+                    {useCard && (
+                    <div className="space-y-3">
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Tarjeta</label>
+                            <select
+                                value={cardId}
+                                onChange={e => setCardId(e.target.value)}
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
+                            >
+                                {creditCards.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Cuotas</label>
+                            <input
+                                type="number"
+                                value={numInstallments}
+                                onChange={e => setNumInstallments(e.target.value)}
+                                min="1"
+                                max="60"
+                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
+                            />
+                            {selectedCard && parseFloat(amount) > 0 && (
+                                <p className="text-[11px] text-gray-500 mt-1">
+                                    {parseInt(numInstallments) || 1}x de ${(parseFloat(amount) / (parseInt(numInstallments) || 1)).toLocaleString('es-AR', { maximumFractionDigits: 0 })} — vence {selectedCard.due_day} de cada mes
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                    )}
 
                     {/* Monto + Fecha */}
                     <div className="grid grid-cols-2 gap-3">

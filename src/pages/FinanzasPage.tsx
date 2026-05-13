@@ -665,7 +665,14 @@ export function FinanzasPage() {
                     projects={projects as any}
                     entities={entities}
                     banks={banks}
+                    creditCards={cards}
                     onSave={handleSaveMovement}
+                    onSaveInstallment={async (data) => {
+                        await createInstallmentPurchase(data)
+                        setShowMovementModal(false)
+                        setEditMovement(null)
+                        if (activeTab === 'cuentas') loadCuentasData()
+                    }}
                     onClose={() => { setShowMovementModal(false); setEditMovement(null) }}
                     onDelete={editMovement ? handleDeleteMovement : undefined}
                     onCreateAccount={async (data) => createAccount(data) as Promise<Account | null>}
