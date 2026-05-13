@@ -78,7 +78,7 @@ function PayModal({ title, subtitle, amount, accounts, paying, onConfirm, onClos
                         disabled={!accountId || paying}
                         className="flex-1 py-2.5 bg-green-600 text-white font-bold text-xs uppercase rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {paying ? 'Pagando…' : 'Confirmar pago'}
+                        Confirmar pago
                     </button>
                 </div>
             </div>

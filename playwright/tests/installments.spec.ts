@@ -77,10 +77,14 @@ test.describe('Installments / Cuotas', () => {
         await page.goto('/finanzas')
         await page.getByRole('button', { name: /cuentas/i }).click()
 
-        // Find the specific installment row by description and click its Pagar button
-        const installmentRow = page.locator('p.text-navy-900', { hasText: desc }).first()
+        // Find the installment row in the timeline (has both the description and a Pagar button)
+        const installmentRow = page.locator('div.flex.items-center.gap-3').filter({
+            has: page.locator('p', { hasText: desc }),
+        }).filter({
+            has: page.getByRole('button', { name: /pagar/i }),
+        }).first()
         await expect(installmentRow).toBeVisible()
-        await installmentRow.locator('xpath=ancestor::div[contains(@class,"flex items-center gap-3")]').getByRole('button', { name: /pagar/i }).click()
+        await installmentRow.getByRole('button', { name: /pagar/i }).click()
 
         // In the PayModal, select the seeded account and confirm
         await page.locator('select').last().selectOption(accountId)
