@@ -19,13 +19,16 @@ test.describe('Banking structure', () => {
         await page.goto('/finanzas')
         await page.getByRole('button', { name: /cuentas/i }).click()
 
-        // Click "Nueva cuenta"
-        await page.getByRole('button', { name: /nueva cuenta/i }).click()
+        // Click "Cuenta" (TopBar FAB: "add Cuenta")
+        await page.getByRole('button', { name: 'add Cuenta' }).click()
 
-        // Select tipo Banco to reveal bank selector
-        await page.getByRole('button', { name: /banco/i }).click()
+        // Select the test's entity so its banks appear in the filter
+        await page.locator('select').first().selectOption(entityId)
 
-        // Bank should appear in the bank selector
+        // Select tipo Banco — "account_balance Banco" is the AccountModal type button
+        await page.getByRole('button', { name: 'account_balance Banco' }).click()
+
+        // Bank should appear in the bank selector (second select after entity)
         const bankSelect = page.locator('select').filter({ hasText: bank.name })
         await expect(bankSelect).toBeVisible()
         await expect(bankSelect.locator(`option[value="${bank.id}"]`)).toBeAttached()
@@ -56,8 +59,8 @@ test.describe('Banking structure', () => {
         await page.getByRole('button', { name: /cuentas/i }).click()
 
         // Overdraft section should be visible
-        await expect(page.locator('text=Descubierto')).toBeVisible()
-        await expect(page.locator('text=Límite')).toBeVisible()
+        await expect(page.locator('text=Descubierto').first()).toBeVisible()
+        await expect(page.locator('text=Límite').first()).toBeVisible()
     })
 
     test('nueva tarjeta de crédito muestra límite y disponible correctos', async ({ page }) => {

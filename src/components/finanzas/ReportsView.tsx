@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-import { formatCurrency } from '../../lib/utils'
+import { formatCurrency, exportToCSV } from '../../lib/utils'
 import type { ProjectCost, AccountWithBalance, InventoryStock, CreditCardBalance, UpcomingInstallment } from '../../types/database'
 
-type ReportTab = 'proyectos' | 'cuentas' | 'categorias' | 'inventario' | 'tarjetas'
+type ReportTab = 'proyectos' | 'cuentas' | 'categorias' | 'inventario' | 'tarjetas' | 'compras'
+
+interface PurchaseReportRow {
+    supplier: string
+    category: string
+    purchase_count: number
+    total_spent: number
+    registered_in_finanzas: number
+}
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
     return <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wider mb-3">{children}</h3>
@@ -24,6 +32,19 @@ function StatRow({ label, sublabel, value, subvalue, color }: { label: string; s
     )
 }
 
+function ExportButton({ onClick }: { onClick: () => void }) {
+    return (
+        <button
+            onClick={onClick}
+            title="Exportar CSV"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-navy-900 transition-colors text-[11px] font-bold uppercase tracking-wide"
+        >
+            <span className="material-symbols-outlined text-sm">download</span>
+            CSV
+        </button>
+    )
+}
+
 export function ReportsView() {
     const [tab, setTab] = useState<ReportTab>('proyectos')
     const [projectCosts, setProjectCosts] = useState<ProjectCost[]>([])
@@ -32,6 +53,7 @@ export function ReportsView() {
     const [categoryStats, setCategoryStats] = useState<{ name: string; color: string; icon: string; total: number }[]>([])
     const [cardBalances, setCardBalances] = useState<CreditCardBalance[]>([])
     const [upcomingInstallments, setUpcomingInstallments] = useState<UpcomingInstallment[]>([])
+    const [purchaseReport, setPurchaseReport] = useState<PurchaseReportRow[]>([])
     const [loading, setLoading] = useState(false)
 
     const [periodFrom, setPeriodFrom] = useState(() => {
@@ -83,8 +105,69 @@ export function ReportsView() {
                 }
                 setCategoryStats(Array.from(map.values()).sort((a, b) => b.total - a.total))
             }
+        } else if (t === 'compras') {
+            const { data: purchases } = await supabase
+                .from('purchases')
+                .select('id, description, quantity, unit_price, movement_id, supplier:suppliers(name, category), project:projects(name)')
+                .eq('status', 'comprado')
+
+            if (purchases) {
+                const map = new Map<string, PurchaseReportRow>()
+                for (const p of purchases as any[]) {
+                    const supplierName = p.supplier?.name ?? 'Sin proveedor'
+                    const key = supplierName
+                    const spent = (p.unit_price ?? 0) * (p.quantity ?? 1)
+                    const existing = map.get(key) ?? {
+                        supplier: supplierName,
+                        category: p.supplier?.category ?? '—',
+                        purchase_count: 0,
+                        total_spent: 0,
+                        registered_in_finanzas: 0,
+                    }
+                    existing.purchase_count++
+                    existing.total_spent += spent
+                    if (p.movement_id) existing.registered_in_finanzas++
+                    map.set(key, existing)
+                }
+                setPurchaseReport(Array.from(map.values()).sort((a, b) => b.total_spent - a.total_spent))
+            }
         }
         setLoading(false)
+    }
+
+    // --- Export handlers ---
+    function handleExport() {
+        if (tab === 'proyectos') {
+            exportToCSV(
+                projectCosts.map(p => ({ Proyecto: p.name, Cliente: p.client, Total: p.total_cost, Materiales: p.materials_cost, ManoDeObra: p.labor_cost, Movimientos: p.movement_count })),
+                'reporte_proyectos'
+            )
+        } else if (tab === 'cuentas') {
+            exportToCSV(
+                accountBalances.map(a => ({ Cuenta: a.name, Entidad: a.entity_name, Saldo: a.balance })),
+                'reporte_cuentas'
+            )
+        } else if (tab === 'tarjetas') {
+            exportToCSV(
+                cardBalances.map(c => ({ Tarjeta: c.name, Banco: c.bank_name ?? '', Limite: c.credit_limit, Utilizado: c.debt_used, Disponible: c.available })),
+                'reporte_tarjetas'
+            )
+        } else if (tab === 'categorias') {
+            exportToCSV(
+                categoryStats.map(c => ({ Categoria: c.name, Total: c.total })),
+                `reporte_categorias_${periodFrom}_${periodTo}`
+            )
+        } else if (tab === 'inventario') {
+            exportToCSV(
+                stockItems.map(i => ({ Item: i.name, Unidad: i.unit, StockActual: i.stock_current, StockMinimo: i.stock_min })),
+                'reporte_inventario'
+            )
+        } else if (tab === 'compras') {
+            exportToCSV(
+                purchaseReport.map(r => ({ Proveedor: r.supplier, Categoria: r.category, Compras: r.purchase_count, TotalGastado: r.total_spent, RegistradosEnFinanzas: r.registered_in_finanzas })),
+                'reporte_compras'
+            )
+        }
     }
 
     const REPORT_TABS: { value: ReportTab; label: string; icon: string }[] = [
@@ -93,10 +176,12 @@ export function ReportsView() {
         { value: 'tarjetas',    label: 'Tarjetas',   icon: 'credit_card' },
         { value: 'categorias',  label: 'Categorías', icon: 'label' },
         { value: 'inventario',  label: 'Stock',      icon: 'inventory_2' },
+        { value: 'compras',     label: 'Compras',    icon: 'shopping_cart' },
     ]
 
     const totalCosts = projectCosts.reduce((s, p) => s + p.total_cost, 0)
     const totalBalance = accountBalances.reduce((s, a) => s + a.balance, 0)
+    const totalPurchaseSpend = purchaseReport.reduce((s, r) => s + r.total_spent, 0)
 
     return (
         <div className="space-y-4">
@@ -139,8 +224,11 @@ export function ReportsView() {
                         {tab === 'proyectos' && (
                             <>
                                 <div className="flex items-center justify-between mb-4">
-                                    <SectionTitle>Costo por proyecto</SectionTitle>
-                                    <span className="text-xs font-black text-red-600">{formatCurrency(totalCosts)} total</span>
+                                    <div className="flex items-center gap-3">
+                                        <SectionTitle>Costo por proyecto</SectionTitle>
+                                        <span className="text-xs font-black text-red-600">{formatCurrency(totalCosts)} total</span>
+                                    </div>
+                                    <ExportButton onClick={handleExport} />
                                 </div>
                                 {projectCosts.length === 0 ? (
                                     <p className="text-sm text-gray-400 text-center py-6">Sin movimientos por proyecto</p>
@@ -161,10 +249,13 @@ export function ReportsView() {
                         {tab === 'cuentas' && (
                             <>
                                 <div className="flex items-center justify-between mb-4">
-                                    <SectionTitle>Saldo por cuenta</SectionTitle>
-                                    <span className={`text-xs font-black ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        {formatCurrency(totalBalance)} total
-                                    </span>
+                                    <div className="flex items-center gap-3">
+                                        <SectionTitle>Saldo por cuenta</SectionTitle>
+                                        <span className={`text-xs font-black ${totalBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                            {formatCurrency(totalBalance)} total
+                                        </span>
+                                    </div>
+                                    <ExportButton onClick={handleExport} />
                                 </div>
                                 {accountBalances.length === 0 ? (
                                     <p className="text-sm text-gray-400 text-center py-6">Sin cuentas</p>
@@ -184,7 +275,6 @@ export function ReportsView() {
                         {tab === 'tarjetas' && (() => {
                             const totalDebt = cardBalances.reduce((s, c) => s + c.debt_used, 0)
                             const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
-                            // Group upcoming by month
                             const monthMap = new Map<string, number>()
                             for (const inst of upcomingInstallments) {
                                 const d = new Date(inst.due_date + 'T00:00:00')
@@ -195,8 +285,11 @@ export function ReportsView() {
                             return (
                                 <>
                                     <div className="flex items-center justify-between mb-4">
-                                        <SectionTitle>Deuda por tarjeta</SectionTitle>
-                                        <span className="text-xs font-black text-red-600">{formatCurrency(totalDebt)} total</span>
+                                        <div className="flex items-center gap-3">
+                                            <SectionTitle>Deuda por tarjeta</SectionTitle>
+                                            <span className="text-xs font-black text-red-600">{formatCurrency(totalDebt)} total</span>
+                                        </div>
+                                        <ExportButton onClick={handleExport} />
                                     </div>
                                     {cardBalances.length === 0 ? (
                                         <p className="text-sm text-gray-400 text-center py-4">Sin tarjetas de crédito</p>
@@ -245,7 +338,10 @@ export function ReportsView() {
                         {/* CATEGORÍAS */}
                         {tab === 'categorias' && (
                             <>
-                                <SectionTitle>Egresos por categoría</SectionTitle>
+                                <div className="flex items-center justify-between mb-4">
+                                    <SectionTitle>Egresos por categoría</SectionTitle>
+                                    <ExportButton onClick={handleExport} />
+                                </div>
                                 {categoryStats.length === 0 ? (
                                     <p className="text-sm text-gray-400 text-center py-6">Sin egresos en el período</p>
                                 ) : categoryStats.map(c => (
@@ -265,7 +361,10 @@ export function ReportsView() {
                         {/* INVENTARIO */}
                         {tab === 'inventario' && (
                             <>
-                                <SectionTitle>Estado de stock</SectionTitle>
+                                <div className="flex items-center justify-between mb-4">
+                                    <SectionTitle>Estado de stock</SectionTitle>
+                                    <ExportButton onClick={handleExport} />
+                                </div>
                                 {stockItems.length === 0 ? (
                                     <p className="text-sm text-gray-400 text-center py-6">Sin ítems de inventario</p>
                                 ) : stockItems.map(i => {
@@ -290,6 +389,40 @@ export function ReportsView() {
                                         </div>
                                     )
                                 })}
+                            </>
+                        )}
+
+                        {/* COMPRAS */}
+                        {tab === 'compras' && (
+                            <>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <SectionTitle>Gasto por proveedor</SectionTitle>
+                                        {totalPurchaseSpend > 0 && (
+                                            <span className="text-xs font-black text-red-600">{formatCurrency(totalPurchaseSpend)} total</span>
+                                        )}
+                                    </div>
+                                    <ExportButton onClick={handleExport} />
+                                </div>
+                                {purchaseReport.length === 0 ? (
+                                    <p className="text-sm text-gray-400 text-center py-6">Sin compras registradas</p>
+                                ) : purchaseReport.map(r => (
+                                    <div key={r.supplier} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+                                        <div>
+                                            <p className="text-sm font-bold text-navy-900">{r.supplier}</p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <p className="text-[10px] text-gray-400">{r.category} · {r.purchase_count} compra{r.purchase_count !== 1 ? 's' : ''}</p>
+                                                {r.registered_in_finanzas > 0 && (
+                                                    <span className="flex items-center gap-0.5 text-[9px] font-bold uppercase text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full">
+                                                        <span className="material-symbols-outlined text-[10px]">link</span>
+                                                        {r.registered_in_finanzas}/{r.purchase_count} en finanzas
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className="text-sm font-black text-red-600">{formatCurrency(r.total_spent)}</span>
+                                    </div>
+                                ))}
                             </>
                         )}
                     </div>

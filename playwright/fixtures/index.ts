@@ -99,6 +99,7 @@ export async function seedInstallmentPurchase(cardId: string, opts?: {
     const total = opts?.total_amount ?? 60_000
     const n = opts?.num_installments ?? 3
     const installment_amt = Math.ceil((total / n) * 100) / 100
+    const description = opts?.description ?? `TestPurchase-${Date.now()}`
 
     const firstDate = opts?.first_due_date ?? (() => {
         const d = new Date()
@@ -109,7 +110,7 @@ export async function seedInstallmentPurchase(cardId: string, opts?: {
 
     const { data: ip, error } = await db.from('installment_purchases').insert({
         credit_card_id: cardId,
-        description: opts?.description ?? `TestPurchase-${Date.now()}`,
+        description,
         total_amount: total,
         num_installments: n,
         installment_amt,
@@ -131,7 +132,7 @@ export async function seedInstallmentPurchase(cardId: string, opts?: {
     })
     await db.from('installments').insert(installments)
 
-    return ipData
+    return { ...ipData, description }
 }
 
 // ─── Cleanup helpers ──────────────────────────────────────────────────────────

@@ -29,12 +29,15 @@ test.describe('Installments / Cuotas', () => {
         // Find the card and click "add installment purchase"
         await page.locator('[title="Registrar compra en cuotas"]').first().click()
 
-        // Fill the form
+        // Fill the form — ensure the seeded card is selected
+        await page.locator('select').first().selectOption(cardId)
         await page.getByPlaceholder(/notebook/i).fill('Herramienta test')
-        await page.locator('input[type=number]').filter({ hasText: '' }).nth(0).fill('60000')
-        await page.locator('input[type=number]').filter({ hasText: '' }).nth(1).fill('3')
+        await page.locator('input[type=number]').nth(0).fill('60000')
+        await page.locator('input[type=number]').nth(1).fill('3')
 
         await page.getByRole('button', { name: /registrar/i }).click()
+        // Wait for modal to close and DB write to complete
+        await expect(page.getByPlaceholder(/notebook/i)).not.toBeVisible()
 
         // Verify installments created in DB
         const { data } = await db
@@ -53,14 +56,15 @@ test.describe('Installments / Cuotas', () => {
         await page.goto('/finanzas')
         await page.getByRole('button', { name: /cuentas/i }).click()
 
-        // Installments timeline section should be visible
-        await expect(page.locator('text=Cuotas pendientes')).toBeVisible()
+        // Installments timeline section should be visible (h3 heading, not "Sin cuotas pendientes")
+        await expect(page.getByRole('heading', { name: /cuotas pendientes/i })).toBeVisible()
         // Should show 3 months with amounts
         await expect(page.locator('text=20.000').first()).toBeVisible()
     })
 
     test('pagar cuota crea movement y marca cuota como pagada', async ({ page }) => {
-        const ip = await seedInstallmentPurchase(cardId, { total_amount: 60_000, num_installments: 3 })
+        const desc = `PagoTest-${Date.now()}`
+        const ip = await seedInstallmentPurchase(cardId, { total_amount: 60_000, num_installments: 3, description: desc })
 
         // Get first installment
         const { data: installments } = await db
@@ -73,12 +77,16 @@ test.describe('Installments / Cuotas', () => {
         await page.goto('/finanzas')
         await page.getByRole('button', { name: /cuentas/i }).click()
 
-        // Click "Pagar" on first installment
-        await page.getByRole('button', { name: /pagar/i }).first().click()
+        // Find the specific installment row by description and click its Pagar button
+        const installmentRow = page.locator('p.text-navy-900', { hasText: desc }).first()
+        await expect(installmentRow).toBeVisible()
+        await installmentRow.locator('xpath=ancestor::div[contains(@class,"flex items-center gap-3")]').getByRole('button', { name: /pagar/i }).click()
 
-        // In the PayModal, select account and confirm
-        await page.locator('select').last().selectOption({ index: 0 })
+        // In the PayModal, select the seeded account and confirm
+        await page.locator('select').last().selectOption(accountId)
         await page.getByRole('button', { name: /confirmar pago/i }).click()
+        // Wait for modal to close confirming async payment completed
+        await expect(page.getByRole('button', { name: /confirmar pago/i })).not.toBeVisible({ timeout: 10000 })
 
         // Verify installment marked as paid
         const { data: updated } = await db.from('installments').select('*').eq('id', firstInstallment.id).single()
@@ -96,7 +104,7 @@ test.describe('Installments / Cuotas', () => {
         await page.goto('/finanzas')
         await page.getByRole('button', { name: /cuentas/i }).click()
 
-        await expect(page.locator('text=Vencida')).toBeVisible()
+        await expect(page.locator('text=Vencida').first()).toBeVisible()
     })
 
     test('CreditCardCard muestra utilizado y disponible actualizados', async ({ page }) => {

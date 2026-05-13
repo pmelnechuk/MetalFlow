@@ -230,6 +230,7 @@ export type Database = {
                     unit_price: number | null
                     date_purchased: string | null
                     notes: string | null
+                    movement_id: string | null
                     created_at: string | null
                 }
                 Insert: {
@@ -243,6 +244,7 @@ export type Database = {
                     unit_price?: number | null
                     date_purchased?: string | null
                     notes?: string | null
+                    movement_id?: string | null
                     created_at?: string | null
                 }
                 Update: {
@@ -256,6 +258,7 @@ export type Database = {
                     unit_price?: number | null
                     date_purchased?: string | null
                     notes?: string | null
+                    movement_id?: string | null
                     created_at?: string | null
                 }
                 Relationships: [

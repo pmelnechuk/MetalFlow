@@ -14,7 +14,7 @@ import { useMovements } from '../hooks/useMovements'
 import { useCreditCards } from '../hooks/useCreditCards'
 import { useInstallments } from '../hooks/useInstallments'
 import { useEntities } from '../hooks/useEntities'
-import { cn } from '../lib/utils'
+import { cn, formatCurrency } from '../lib/utils'
 import type { Purchase, Supplier, SupplierWithStats, PurchaseStatus } from '../types/database'
 
 type Tab = 'compras' | 'proveedores'
@@ -183,6 +183,9 @@ export function ComprasPage() {
     }
 
     const pendingCount = purchases.filter(p => p.status === 'pendiente').length
+    const boughtPurchases = purchases.filter(p => p.status === 'comprado')
+    const totalSpent = boughtPurchases.reduce((s, p) => s + (p.unit_price ?? 0) * (p.quantity ?? 1), 0)
+    const registeredInFinanzas = boughtPurchases.filter(p => p.movement_id).length
 
     return (
         <>
@@ -203,6 +206,32 @@ export function ComprasPage() {
                     </button>
                 }
             />
+
+            {/* Financial summary bar */}
+            {boughtPurchases.length > 0 && (
+                <div className="px-6 lg:px-8 py-2 bg-navy-900 flex items-center gap-6 text-white overflow-x-auto">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="material-symbols-outlined text-base text-green-400">payments</span>
+                        <span className="text-xs font-bold uppercase tracking-wide text-gray-300">Total comprado</span>
+                        <span className="text-xs font-black text-white ml-1">{formatCurrency(totalSpent)}</span>
+                    </div>
+                    <div className="w-px h-4 bg-white/20" />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="material-symbols-outlined text-base text-blue-400">link</span>
+                        <span className="text-xs font-bold uppercase tracking-wide text-gray-300">En finanzas</span>
+                        <span className="text-xs font-black text-white ml-1">{registeredInFinanzas}/{boughtPurchases.length}</span>
+                    </div>
+                    {registeredInFinanzas < boughtPurchases.length && (
+                        <>
+                            <div className="w-px h-4 bg-white/20" />
+                            <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="material-symbols-outlined text-base text-amber-400">warning</span>
+                                <span className="text-xs font-bold text-amber-300">{boughtPurchases.length - registeredInFinanzas} sin registrar</span>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
 
             {/* Tabs + filter */}
             <div className="px-6 lg:px-8 pt-4 pb-2 border-b border-gray-200 bg-white flex flex-wrap items-center gap-4">

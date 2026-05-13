@@ -78,7 +78,15 @@ export function PurchaseCard({ purchase, onEdit, onMarkBought, onDelete }: Props
                 {/* Total (when bought) */}
                 {total != null && (
                     <div className="bg-green-50 rounded-lg px-3 py-2 flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase text-green-700 tracking-wide">Total</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold uppercase text-green-700 tracking-wide">Total</span>
+                            {purchase.movement_id && (
+                                <span className="flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full">
+                                    <span className="material-symbols-outlined text-[10px]">link</span>
+                                    En Finanzas
+                                </span>
+                            )}
+                        </div>
                         <span className="text-base font-black text-green-800">{formatCurrency(total)}</span>
                     </div>
                 )}

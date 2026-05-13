@@ -1,12 +1,8 @@
 import { test, expect } from '@playwright/test'
-import path from 'path'
 import {
     seedEntity, seedAccount, seedCreditCard, seedInventoryItem,
     cleanupEntity, cleanupInventoryItem, db
 } from '../fixtures'
-
-// Fixture image: a small dummy receipt JPG bundled with tests
-const RECEIPT_IMAGE = path.join(__dirname, '../fixtures/test-receipt.jpg')
 
 test.describe('Invoice / Facturas', () => {
     let entityId: string
@@ -53,11 +49,9 @@ test.describe('Invoice / Facturas', () => {
 
         // Fill first line item: link to existing inventory item
         await page.locator('input[placeholder="Nombre del ítem"]').first().fill(item.name)
-        await page.locator('input[type=number]').nth(0).fill('20')   // qty
-        await page.locator('input[type=text]').filter({ hasText: '' }).nth(0).fill('kg')  // unit
-        // unit_price input
-        const priceInputs = page.locator('input[type=number]')
-        await priceInputs.nth(2).fill('500')  // unit_price
+        await page.locator('input[type=number]').nth(0).fill('20')   // qty (nth 0)
+        await page.locator('input[type=text]').nth(2).fill('kg')     // unit (0=supplier, 1=itemName, 2=unit)
+        await page.locator('input[type=number]').nth(1).fill('500')  // unit_price (nth 1)
 
         // Link to existing inventory item
         await page.locator('select').filter({ hasText: 'Sin inventario' }).first().selectOption(item.id)
@@ -66,6 +60,8 @@ test.describe('Invoice / Facturas', () => {
         await page.locator('select').filter({ hasText: '' }).last().selectOption({ index: 0 })
 
         await page.getByRole('button', { name: /guardar factura/i }).click()
+        // Wait for modal to close (handleSaveInvoice completes and calls setShowInvoiceModal(false))
+        await expect(page.getByRole('button', { name: /guardar factura/i })).not.toBeVisible({ timeout: 15000 })
 
         // Verify movement created
         const { data: movs } = await db
@@ -84,16 +80,17 @@ test.describe('Invoice / Facturas', () => {
         await page.getByRole('button', { name: /cargar manualmente/i }).click()
 
         await page.locator('input[placeholder="Nombre del ítem"]').first().fill(newName)
-        await page.locator('input[type=number]').nth(0).fill('5')
-        await page.locator('input[type=number]').nth(2).fill('800')
+        await page.locator('input[type=number]').nth(0).fill('5')   // qty
+        await page.locator('input[type=number]').nth(1).fill('800') // unit_price
 
         // Select "Crear nuevo ítem"
         await page.locator('select').filter({ hasText: 'Sin inventario' }).first().selectOption('__new__')
 
-        // Fill new item fields
-        await page.locator('input[placeholder="0"]').last().fill('5')  // stock_min
+        // Fill new item fields — stock_min input is inside the blue .bg-blue-50 section
+        await page.locator('.bg-blue-50 input[type=number]').first().fill('5')  // stock_min
 
         await page.getByRole('button', { name: /guardar factura/i }).click()
+        await expect(page.getByRole('button', { name: /guardar factura/i })).not.toBeVisible({ timeout: 15000 })
 
         // Verify new inventory item created
         const { data } = await db.from('inventory_items').select('*').eq('name', newName)
@@ -109,8 +106,8 @@ test.describe('Invoice / Facturas', () => {
         await page.getByRole('button', { name: /cargar manualmente/i }).click()
 
         await page.locator('input[placeholder="Nombre del ítem"]').first().fill('Compra tarjeta')
-        await page.locator('input[type=number]').nth(0).fill('1')
-        await page.locator('input[type=number]').nth(2).fill('30000')
+        await page.locator('input[type=number]').nth(0).fill('1')    // qty
+        await page.locator('input[type=number]').nth(1).fill('30000') // unit_price
 
         // Switch to card payment
         await page.getByRole('button', { name: /tarjeta crédito/i }).click()
@@ -118,6 +115,7 @@ test.describe('Invoice / Facturas', () => {
         await page.locator('input[placeholder="Cuotas"]').fill('6')
 
         await page.getByRole('button', { name: /guardar factura/i }).click()
+        await expect(page.getByRole('button', { name: /guardar factura/i })).not.toBeVisible({ timeout: 15000 })
 
         // Verify installment_purchase created
         const { data } = await db.from('installment_purchases').select('*').eq('credit_card_id', card.id)

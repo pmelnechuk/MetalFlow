@@ -56,7 +56,7 @@ test.describe('Inventory stock derived from movements', () => {
         await seedMovement(entityId, accountId, 0, {
             type: 'consumo_insumo',
             inventory_item_id: itemId,
-            inventory_qty: -5,
+            inventory_qty: 5,  // view subtracts consumo_qty: stock = compra - consumo
         })
 
         const { data } = await (db as any)
@@ -77,6 +77,8 @@ test.describe('Inventory stock derived from movements', () => {
 
         await page.goto('/finanzas')
         await page.getByRole('button', { name: /inventario/i }).click()
+        // Wait for inventory data to load (item name starts with "Chapa-" from beforeEach)
+        await page.locator('text=Chapa-').first().waitFor({ timeout: 10000 })
 
         await expect(page.locator('text=Stock bajo').first()).toBeVisible()
     })
@@ -88,16 +90,23 @@ test.describe('Inventory stock derived from movements', () => {
         await expect(page.locator('text=Sin stock').first()).toBeVisible()
     })
 
-    test('compra en UI refleja en inventory_stock view', async ({ page }) => {
-        await page.goto('/finanzas')
+    test('múltiples compras se acumulan en inventory_stock view', async () => {
+        await seedMovement(entityId, accountId, -5_000, {
+            type: 'compra_insumo',
+            inventory_item_id: itemId,
+            inventory_qty: 10,
+        })
+        await seedMovement(entityId, accountId, -3_000, {
+            type: 'compra_insumo',
+            inventory_item_id: itemId,
+            inventory_qty: 7,
+        })
 
-        // Create a movement via UI
-        await page.getByRole('button', { name: /movimiento/i }).click()
-
-        // Type = Compra (compra_insumo)
-        await page.getByText('Compra').click()
-
-        // Fill amount
-        await page.locator('input[type=number]').first().fill('5000')
+        const { data } = await (db as any)
+            .from('inventory_stock')
+            .select('stock_current')
+            .eq('id', itemId)
+            .single()
+        expect(data.stock_current).toBe(17)
     })
 })
