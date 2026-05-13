@@ -351,6 +351,50 @@ export type Database = {
                     { foreignKeyName: "movements_purchase_id_fkey"; columns: ["purchase_id"]; isOneToOne: false; referencedRelation: "purchases"; referencedColumns: ["id"] }
                 ]
             }
+            banks: {
+                Row: { id: string; entity_id: string | null; name: string; short_name: string | null; active: boolean; created_at: string | null }
+                Insert: { id?: string; entity_id?: string | null; name: string; short_name?: string | null; active?: boolean; created_at?: string | null }
+                Update: { id?: string; entity_id?: string | null; name?: string; short_name?: string | null; active?: boolean; created_at?: string | null }
+                Relationships: [{ foreignKeyName: "banks_entity_id_fkey"; columns: ["entity_id"]; isOneToOne: false; referencedRelation: "entities"; referencedColumns: ["id"] }]
+            }
+            credit_cards: {
+                Row: { id: string; entity_id: string; bank_id: string | null; name: string; credit_limit: number; closing_day: number; due_day: number; currency: string; active: boolean; created_at: string | null }
+                Insert: { id?: string; entity_id: string; bank_id?: string | null; name: string; credit_limit?: number; closing_day?: number; due_day?: number; currency?: string; active?: boolean; created_at?: string | null }
+                Update: { id?: string; entity_id?: string; bank_id?: string | null; name?: string; credit_limit?: number; closing_day?: number; due_day?: number; currency?: string; active?: boolean; created_at?: string | null }
+                Relationships: [
+                    { foreignKeyName: "credit_cards_entity_id_fkey"; columns: ["entity_id"]; isOneToOne: false; referencedRelation: "entities"; referencedColumns: ["id"] },
+                    { foreignKeyName: "credit_cards_bank_id_fkey"; columns: ["bank_id"]; isOneToOne: false; referencedRelation: "banks"; referencedColumns: ["id"] }
+                ]
+            }
+            installment_purchases: {
+                Row: { id: string; credit_card_id: string; purchase_id: string | null; description: string; total_amount: number; num_installments: number; installment_amt: number; first_due_date: string; status: string; category_id: string | null; project_id: string | null; created_at: string | null }
+                Insert: { id?: string; credit_card_id: string; purchase_id?: string | null; description: string; total_amount: number; num_installments?: number; installment_amt: number; first_due_date: string; status?: string; category_id?: string | null; project_id?: string | null; created_at?: string | null }
+                Update: { id?: string; credit_card_id?: string; purchase_id?: string | null; description?: string; total_amount?: number; num_installments?: number; installment_amt?: number; first_due_date?: string; status?: string; category_id?: string | null; project_id?: string | null; created_at?: string | null }
+                Relationships: [
+                    { foreignKeyName: "installment_purchases_credit_card_id_fkey"; columns: ["credit_card_id"]; isOneToOne: false; referencedRelation: "credit_cards"; referencedColumns: ["id"] },
+                    { foreignKeyName: "installment_purchases_purchase_id_fkey"; columns: ["purchase_id"]; isOneToOne: false; referencedRelation: "purchases"; referencedColumns: ["id"] },
+                    { foreignKeyName: "installment_purchases_category_id_fkey"; columns: ["category_id"]; isOneToOne: false; referencedRelation: "expense_categories"; referencedColumns: ["id"] },
+                    { foreignKeyName: "installment_purchases_project_id_fkey"; columns: ["project_id"]; isOneToOne: false; referencedRelation: "projects"; referencedColumns: ["id"] }
+                ]
+            }
+            installments: {
+                Row: { id: string; installment_purchase_id: string; installment_number: number; amount: number; due_date: string; paid_at: string | null; movement_id: string | null; status: string; created_at: string | null }
+                Insert: { id?: string; installment_purchase_id: string; installment_number: number; amount: number; due_date: string; paid_at?: string | null; movement_id?: string | null; status?: string; created_at?: string | null }
+                Update: { id?: string; installment_purchase_id?: string; installment_number?: number; amount?: number; due_date?: string; paid_at?: string | null; movement_id?: string | null; status?: string; created_at?: string | null }
+                Relationships: [
+                    { foreignKeyName: "installments_installment_purchase_id_fkey"; columns: ["installment_purchase_id"]; isOneToOne: false; referencedRelation: "installment_purchases"; referencedColumns: ["id"] },
+                    { foreignKeyName: "installments_movement_id_fkey"; columns: ["movement_id"]; isOneToOne: false; referencedRelation: "movements"; referencedColumns: ["id"] }
+                ]
+            }
+            receipts: {
+                Row: { id: string; movement_id: string | null; installment_purchase_id: string | null; storage_path: string; filename: string; mime_type: string | null; size_bytes: number | null; created_at: string | null }
+                Insert: { id?: string; movement_id?: string | null; installment_purchase_id?: string | null; storage_path: string; filename: string; mime_type?: string | null; size_bytes?: number | null; created_at?: string | null }
+                Update: { id?: string; movement_id?: string | null; installment_purchase_id?: string | null; storage_path?: string; filename?: string; mime_type?: string | null; size_bytes?: number | null; created_at?: string | null }
+                Relationships: [
+                    { foreignKeyName: "receipts_movement_id_fkey"; columns: ["movement_id"]; isOneToOne: false; referencedRelation: "movements"; referencedColumns: ["id"] },
+                    { foreignKeyName: "receipts_installment_purchase_id_fkey"; columns: ["installment_purchase_id"]; isOneToOne: false; referencedRelation: "installment_purchases"; referencedColumns: ["id"] }
+                ]
+            }
         }
         Views: Record<string, never>
         Functions: Record<string, never>
@@ -381,7 +425,98 @@ export type Account = {
     initial_balance: number
     currency: string
     active: boolean
+    bank_id: string | null
+    overdraft_limit: number
+    card_last4: string | null
+    card_brand: string | null
     created_at: string | null
+}
+
+export type Bank = {
+    id: string
+    entity_id: string | null
+    name: string
+    short_name: string | null
+    active: boolean
+    created_at: string | null
+}
+
+export type CreditCard = {
+    id: string
+    entity_id: string
+    bank_id: string | null
+    name: string
+    credit_limit: number
+    closing_day: number
+    due_day: number
+    currency: string
+    active: boolean
+    created_at: string | null
+}
+
+export type InstallmentStatus = 'activo' | 'cancelado' | 'terminado'
+export type CuotaStatus = 'pendiente' | 'pagado' | 'vencido'
+
+export type InstallmentPurchase = {
+    id: string
+    credit_card_id: string
+    purchase_id: string | null
+    description: string
+    total_amount: number
+    num_installments: number
+    installment_amt: number
+    first_due_date: string
+    status: InstallmentStatus
+    category_id: string | null
+    project_id: string | null
+    created_at: string | null
+    credit_card?: CreditCard & { bank?: Bank | null }
+    category?: ExpenseCategory | null
+    project?: Pick<Project, 'id' | 'name' | 'client'> | null
+}
+
+export type Installment = {
+    id: string
+    installment_purchase_id: string
+    installment_number: number
+    amount: number
+    due_date: string
+    paid_at: string | null
+    movement_id: string | null
+    status: CuotaStatus
+    created_at: string | null
+}
+
+export type Receipt = {
+    id: string
+    movement_id: string | null
+    installment_purchase_id: string | null
+    storage_path: string
+    filename: string
+    mime_type: string | null
+    size_bytes: number | null
+    created_at: string | null
+}
+
+export type CreditCardBalance = CreditCard & {
+    entity_name: string
+    entity_color: string
+    bank_name: string | null
+    debt_used: number
+    available: number
+}
+
+export type UpcomingInstallment = Installment & {
+    description: string
+    num_installments: number
+    credit_card_id: string
+    card_name: string
+    entity_id: string
+    entity_name: string
+    entity_color: string
+    category_id: string | null
+    category_name: string | null
+    category_color: string | null
 }
 
 export type ExpenseCategory = {
@@ -437,6 +572,10 @@ export type AccountWithBalance = Account & {
     entity_name: string
     entity_color: string
     balance: number
+    bank_id: string | null
+    overdraft_limit: number
+    card_last4: string | null
+    card_brand: string | null
 }
 
 export type InventoryStock = InventoryItem & {

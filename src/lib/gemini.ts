@@ -196,3 +196,76 @@ function blobToBase64(blob: Blob): Promise<string> {
         reader.readAsDataURL(blob)
     })
 }
+
+// ─── Receipt extraction ───────────────────────────────────────────────────────
+
+export interface ReceiptItem {
+    name: string
+    quantity: number
+    unit: string
+    unit_price: number
+    total: number
+}
+
+export interface ReceiptExtraction {
+    supplier_name: string
+    date: string | null
+    items: ReceiptItem[]
+    total: number
+    notes: string
+}
+
+const RECEIPT_PROMPT = `Sos un asistente contable argentino. Analizá la imagen de la factura o ticket y devolvé SOLO JSON con este formato exacto:
+{"supplier_name":"NOMBRE DEL PROVEEDOR","date":"YYYY-MM-DD|null","items":[{"name":"NOMBRE ITEM","quantity":1,"unit":"u|kg|m|m2|lt|pack","unit_price":0.0,"total":0.0}],"total":0.0,"notes":""}
+Reglas:
+- items: uno por producto/servicio distinto. Nunca combinés items distintos.
+- quantity/unit_price/total: siempre numérico, sin símbolo de moneda
+- unit: usar la unidad más adecuada (u, kg, m, m2, lt, pack, etc.)
+- Si no ves algún campo, usá string vacío o null
+- RESPOND ONLY WITH RAW JSON. START WITH '{'. NO MARKDOWN.`
+
+export async function extractReceiptFromImage(imageFile: File): Promise<ReceiptExtraction> {
+    if (!GEMINI_API_KEY) throw new Error('API Key de Gemini no configurada')
+
+    const base64 = await blobToBase64(imageFile)
+    const mimeType = imageFile.type || 'image/jpeg'
+
+    const data = await callGemini({
+        system_instruction: { parts: [{ text: RECEIPT_PROMPT }] },
+        contents: [{
+            parts: [
+                { inline_data: { mime_type: mimeType, data: base64 } },
+                { text: 'Extraé los datos de esta factura o ticket.' },
+            ],
+        }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2048, responseMimeType: 'application/json' },
+    })
+
+    const raw = extractText(data)
+    console.log('[Gemini receipt raw]', raw)
+
+    const firstOpen = raw.indexOf('{')
+    const lastClose = raw.lastIndexOf('}')
+    const text = firstOpen !== -1 && lastClose > firstOpen
+        ? raw.substring(firstOpen, lastClose + 1)
+        : raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
+
+    try {
+        const parsed = JSON.parse(text)
+        return {
+            supplier_name: parsed.supplier_name || '',
+            date: parsed.date || null,
+            items: Array.isArray(parsed.items) ? parsed.items.map((it: any) => ({
+                name: String(it.name || ''),
+                quantity: Number(it.quantity) || 1,
+                unit: String(it.unit || 'u'),
+                unit_price: Number(it.unit_price) || 0,
+                total: Number(it.total) || 0,
+            })) : [],
+            total: Number(parsed.total) || 0,
+            notes: parsed.notes || '',
+        }
+    } catch {
+        throw new Error('No se pudo interpretar la factura. Intentá de nuevo o cargá los datos manualmente.')
+    }
+}

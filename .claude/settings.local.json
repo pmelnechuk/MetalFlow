@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__supabase__list_projects",
+      "mcp__supabase__apply_migration",
+      "Bash(git pull *)",
+      "Bash(Get-ChildItem C:\\\\Flownix\\\\MetalFlow -Recurse -Depth 2 -Name)",
+      "PowerShell(Get-ChildItem C:\\\\Flownix\\\\MetalFlow -Recurse -Depth 3 | Where-Object { $_.FullName -notmatch \"node_modules|\\\\.git\" } | Select-Object FullName | Format-Table -HideTableHeaders)",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__execute_sql",
+      "Bash(npm install *)",
+      "Bash(node *)",
+      "Bash(npx tsc *)",
+      "Bash(git add *)"
+    ]
+  }
+}

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { formatCurrency } from '../../lib/utils'
-import type { ProjectCost, AccountWithBalance, InventoryStock } from '../../types/database'
+import type { ProjectCost, AccountWithBalance, InventoryStock, CreditCardBalance, UpcomingInstallment } from '../../types/database'
 
-type ReportTab = 'proyectos' | 'cuentas' | 'categorias' | 'inventario'
+type ReportTab = 'proyectos' | 'cuentas' | 'categorias' | 'inventario' | 'tarjetas'
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
     return <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wider mb-3">{children}</h3>
@@ -30,6 +30,8 @@ export function ReportsView() {
     const [accountBalances, setAccountBalances] = useState<AccountWithBalance[]>([])
     const [stockItems, setStockItems] = useState<InventoryStock[]>([])
     const [categoryStats, setCategoryStats] = useState<{ name: string; color: string; icon: string; total: number }[]>([])
+    const [cardBalances, setCardBalances] = useState<CreditCardBalance[]>([])
+    const [upcomingInstallments, setUpcomingInstallments] = useState<UpcomingInstallment[]>([])
     const [loading, setLoading] = useState(false)
 
     const [periodFrom, setPeriodFrom] = useState(() => {
@@ -54,6 +56,11 @@ export function ReportsView() {
         } else if (t === 'inventario') {
             const { data } = await db.from('inventory_stock').select('*').order('name')
             setStockItems((data as InventoryStock[]) || [])
+        } else if (t === 'tarjetas') {
+            const { data: cards } = await db.from('credit_card_balances').select('*').eq('active', true).order('name')
+            setCardBalances((cards as CreditCardBalance[]) || [])
+            const { data: inst } = await db.from('upcoming_installments').select('*').neq('status', 'pagado')
+            setUpcomingInstallments((inst as UpcomingInstallment[]) || [])
         } else if (t === 'categorias') {
             const { data } = await supabase
                 .from('movements')
@@ -83,6 +90,7 @@ export function ReportsView() {
     const REPORT_TABS: { value: ReportTab; label: string; icon: string }[] = [
         { value: 'proyectos',   label: 'Proyectos',  icon: 'folder_open' },
         { value: 'cuentas',     label: 'Cuentas',    icon: 'account_balance' },
+        { value: 'tarjetas',    label: 'Tarjetas',   icon: 'credit_card' },
         { value: 'categorias',  label: 'Categorías', icon: 'label' },
         { value: 'inventario',  label: 'Stock',      icon: 'inventory_2' },
     ]
@@ -171,6 +179,68 @@ export function ReportsView() {
                                 ))}
                             </>
                         )}
+
+                        {/* TARJETAS */}
+                        {tab === 'tarjetas' && (() => {
+                            const totalDebt = cardBalances.reduce((s, c) => s + c.debt_used, 0)
+                            const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+                            // Group upcoming by month
+                            const monthMap = new Map<string, number>()
+                            for (const inst of upcomingInstallments) {
+                                const d = new Date(inst.due_date + 'T00:00:00')
+                                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+                                monthMap.set(key, (monthMap.get(key) ?? 0) + inst.amount)
+                            }
+                            const monthGroups = Array.from(monthMap.entries()).sort(([a],[b]) => a.localeCompare(b))
+                            return (
+                                <>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <SectionTitle>Deuda por tarjeta</SectionTitle>
+                                        <span className="text-xs font-black text-red-600">{formatCurrency(totalDebt)} total</span>
+                                    </div>
+                                    {cardBalances.length === 0 ? (
+                                        <p className="text-sm text-gray-400 text-center py-4">Sin tarjetas de crédito</p>
+                                    ) : cardBalances.map(c => (
+                                        <div key={c.id} className="py-3 border-b border-gray-100 last:border-0">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <div>
+                                                    <p className="text-sm font-bold text-navy-900">{c.name}</p>
+                                                    <p className="text-[10px] text-gray-400">{c.bank_name ?? 'Sin banco'} · Límite {formatCurrency(c.credit_limit)}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-black text-red-600">{formatCurrency(c.debt_used)}</p>
+                                                    <p className="text-[10px] text-green-600">Disp: {formatCurrency(c.available)}</p>
+                                                </div>
+                                            </div>
+                                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-red-500 transition-all"
+                                                    style={{ width: `${Math.min(100, c.credit_limit > 0 ? (c.debt_used / c.credit_limit) * 100 : 0)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {monthGroups.length > 0 && (
+                                        <div className="mt-4 pt-4 border-t border-gray-100">
+                                            <SectionTitle>Cuotas por vencer (6 meses)</SectionTitle>
+                                            {monthGroups.map(([key, total]) => {
+                                                const [year, month] = key.split('-')
+                                                const isNow = key === `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`
+                                                return (
+                                                    <div key={key} className={`flex items-center justify-between py-2 border-b border-gray-100 last:border-0 ${isNow ? 'font-bold' : ''}`}>
+                                                        <span className={`text-sm ${isNow ? 'text-navy-900 font-black' : 'text-gray-600 font-medium'}`}>
+                                                            {MONTHS[parseInt(month)-1]} {year}{isNow ? ' ← este mes' : ''}
+                                                        </span>
+                                                        <span className={`text-sm font-black ${isNow ? 'text-red-700' : 'text-gray-700'}`}>{formatCurrency(total)}</span>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    )}
+                                </>
+                            )
+                        })()}
 
                         {/* CATEGORÍAS */}
                         {tab === 'categorias' && (

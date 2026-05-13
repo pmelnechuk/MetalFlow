@@ -37,6 +37,10 @@ export function useAccounts() {
         type: Account['type']
         initial_balance?: number
         currency?: string
+        bank_id?: string | null
+        overdraft_limit?: number
+        card_last4?: string | null
+        card_brand?: string | null
     }) => {
         const { data: created, error } = await supabase
             .from('accounts')
@@ -46,6 +50,10 @@ export function useAccounts() {
                 type: data.type,
                 initial_balance: data.initial_balance ?? 0,
                 currency: data.currency ?? 'ARS',
+                bank_id: data.bank_id ?? null,
+                overdraft_limit: data.overdraft_limit ?? 0,
+                card_last4: data.card_last4 ?? null,
+                card_brand: data.card_brand ?? null,
             })
             .select()
             .single()
@@ -55,7 +63,9 @@ export function useAccounts() {
         return created as Account
     }
 
-    const updateAccount = async (id: string, updates: Partial<Pick<Account, 'name' | 'type' | 'initial_balance' | 'active'>>) => {
+    const updateAccount = async (id: string, updates: Partial<Pick<Account,
+        'name' | 'type' | 'initial_balance' | 'active' | 'bank_id' | 'overdraft_limit' | 'card_last4' | 'card_brand'
+    >>) => {
         const { error } = await supabase.from('accounts').update(updates).eq('id', id)
         if (error) { console.error(error); return false }
         await fetchAccounts()

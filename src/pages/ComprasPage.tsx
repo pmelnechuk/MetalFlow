@@ -11,6 +11,9 @@ import { useProjects } from '../hooks/useProjects'
 import { useAccounts } from '../hooks/useAccounts'
 import { useInventory } from '../hooks/useInventory'
 import { useMovements } from '../hooks/useMovements'
+import { useCreditCards } from '../hooks/useCreditCards'
+import { useInstallments } from '../hooks/useInstallments'
+import { useEntities } from '../hooks/useEntities'
 import { cn } from '../lib/utils'
 import type { Purchase, Supplier, SupplierWithStats, PurchaseStatus } from '../types/database'
 
@@ -31,6 +34,9 @@ export function ComprasPage() {
     const { accounts } = useAccounts()
     const { items: inventoryItems } = useInventory()
     const { createMovement } = useMovements()
+    const { cards: creditCards } = useCreditCards()
+    const { createInstallmentPurchase } = useInstallments()
+    const { entities } = useEntities()
 
     const [suppliersWithStats, setSuppliersWithStats] = useState<SupplierWithStats[]>([])
     const [statsLoading, setStatsLoading] = useState(false)
@@ -97,7 +103,7 @@ export function ComprasPage() {
                 entity_id: movementData.entity_id,
                 account_id: movementData.account_id,
                 type: 'compra_insumo',
-                amount: unit_price * (buyPurchase.quantity ?? 1),
+                amount: -(unit_price * (buyPurchase.quantity ?? 1)),
                 date: today,
                 description: buyPurchase.description,
                 project_id: buyPurchase.project_id || undefined,
@@ -109,6 +115,31 @@ export function ComprasPage() {
                 const mov = movement as unknown as { id: string }
                 await updatePurchase(buyPurchase.id, { movement_id: mov.id } as any)
             }
+        }
+        setBuyPurchase(null)
+        loadStats()
+    }
+
+    const handleMarkBoughtInstallments = async (unit_price: number, installmentData: {
+        credit_card_id: string
+        num_installments: number
+        first_due_date: string
+        category_id?: string
+    }) => {
+        if (!buyPurchase) return
+        const total = unit_price * (buyPurchase.quantity ?? 1)
+        await markAsBought(buyPurchase.id, unit_price)
+        const ip = await createInstallmentPurchase({
+            credit_card_id: installmentData.credit_card_id,
+            purchase_id: buyPurchase.id,
+            description: buyPurchase.description,
+            total_amount: total,
+            num_installments: installmentData.num_installments,
+            first_due_date: installmentData.first_due_date,
+            category_id: installmentData.category_id,
+        })
+        if (ip) {
+            await updatePurchase(buyPurchase.id, { movement_id: null } as any)
         }
         setBuyPurchase(null)
         loadStats()
@@ -308,7 +339,10 @@ export function ComprasPage() {
                     purchase={buyPurchase}
                     accounts={accounts}
                     inventoryItems={inventoryItems}
+                    creditCards={creditCards}
+                    entities={entities}
                     onConfirm={handleMarkBought}
+                    onConfirmInstallments={handleMarkBoughtInstallments}
                     onClose={() => setBuyPurchase(null)}
                 />
             )}
