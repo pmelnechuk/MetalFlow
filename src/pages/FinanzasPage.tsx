@@ -310,11 +310,25 @@ export function FinanzasPage() {
 
     const handleDeleteCard = async () => {
         if (!editCard) return
+        // Cancel any active installment purchases before deleting
+        const related = activePurchases.filter(p => p.credit_card_id === editCard.id)
+        for (const p of related) {
+            await cancelInstallmentPurchase(p.id)
+        }
         await deleteCard(editCard.id)
         setShowCardModal(false)
         setEditCard(null)
         loadCuentasData()
     }
+
+    const cardDeleteWarning = editCard
+        ? (() => {
+            const related = activePurchases.filter(p => p.credit_card_id === editCard.id)
+            if (related.length === 0) return undefined
+            const pendingCuotas = related.reduce((s, p) => s + p.installments.filter(i => i.status !== 'pagado').length, 0)
+            return `Esta tarjeta tiene ${related.length} compra${related.length !== 1 ? 's' : ''} activa${related.length !== 1 ? 's' : ''} en cuotas con ${pendingCuotas} cuota${pendingCuotas !== 1 ? 's' : ''} pendiente${pendingCuotas !== 1 ? 's' : ''}. Al eliminarla se cancelarán automáticamente.`
+        })()
+        : undefined
 
     // ── Installment handlers ──────────────────────────────────────────────────
     const handleSaveInstallmentPurchase = async (data: Parameters<typeof createInstallmentPurchase>[0]) => {
@@ -772,6 +786,7 @@ export function FinanzasPage() {
                     onSave={handleSaveCard}
                     onClose={() => { setShowCardModal(false); setEditCard(null) }}
                     onDelete={editCard ? handleDeleteCard : undefined}
+                    deleteWarning={cardDeleteWarning}
                 />
             )}
 

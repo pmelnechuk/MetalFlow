@@ -9,11 +9,12 @@ interface Props {
     onSave: (data: Omit<CreditCard, 'id' | 'created_at'>) => void
     onClose: () => void
     onDelete?: () => void
+    deleteWarning?: string
 }
 
 const CARD_BRANDS = ['Visa', 'Mastercard', 'American Express', 'Cabal', 'Naranja']
 
-export function CreditCardModal({ card, entities, banks, onSave, onClose, onDelete }: Props) {
+export function CreditCardModal({ card, entities, banks, onSave, onClose, onDelete, deleteWarning }: Props) {
     const [entityId, setEntityId] = useState(card?.entity_id ?? (entities[0]?.id ?? ''))
     const [bankId, setBankId] = useState(card?.bank_id ?? '')
     const [name, setName] = useState(card?.name ?? '')
@@ -157,7 +158,14 @@ export function CreditCardModal({ card, entities, banks, onSave, onClose, onDele
                     </div>
                 </div>
 
-                <div className="px-6 pb-5 flex gap-2 border-t border-gray-100 pt-4">
+                <div className="px-6 pb-5 flex flex-col gap-3 border-t border-gray-100 pt-4">
+                    {deleteWarning && (
+                        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+                            <span className="material-symbols-outlined text-lg text-amber-500 shrink-0 mt-0.5">warning</span>
+                            <p className="text-xs text-amber-800 font-medium">{deleteWarning}</p>
+                        </div>
+                    )}
+                    <div className="flex gap-2">
                     {onDelete && (
                         confirmDelete ? (
                             <div className="flex gap-2 flex-1">
@@ -182,6 +190,7 @@ export function CreditCardModal({ card, entities, banks, onSave, onClose, onDele
                         <span className="material-symbols-outlined text-lg icon-filled">check_circle</span>
                         {card ? 'Guardar' : 'Crear'}
                     </button>
+                    </div>
                 </div>
             </div>
         </div>
