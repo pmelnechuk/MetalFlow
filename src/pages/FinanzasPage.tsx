@@ -398,22 +398,13 @@ export function FinanzasPage() {
                                 </>
                             )}
                             {activeTab === 'cuentas' && (
-                                <>
-                                    <button
-                                        onClick={() => { setEditBank(null); setShowBankModal(true) }}
-                                        className="flex items-center gap-2 px-3 py-2 border border-gray-300 text-navy-900 font-bold text-xs uppercase rounded-lg hover:bg-gray-50 transition-all"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">corporate_fare</span>
-                                        Banco
-                                    </button>
-                                    <button
-                                        onClick={() => { setEditCard(null); setShowCardModal(true) }}
-                                        className="flex items-center gap-2 px-3 py-2 border border-purple-300 text-purple-700 font-bold text-xs uppercase rounded-lg hover:bg-purple-50 transition-all"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">credit_card</span>
-                                        Tarjeta
-                                    </button>
-                                </>
+                                <button
+                                    onClick={() => { setEditCard(null); setShowCardModal(true) }}
+                                    className="flex items-center gap-2 px-3 py-2 border border-purple-300 text-purple-700 font-bold text-xs uppercase rounded-lg hover:bg-purple-50 transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-lg">credit_card</span>
+                                    Tarjeta
+                                </button>
                             )}
                             <button
                                 onClick={handleFAB}
@@ -599,6 +590,50 @@ export function FinanzasPage() {
                                         accounts={accounts}
                                         onPayInstallment={handlePayInstallment}
                                     />
+                                </section>
+                            )}
+
+                            {/* Banks section */}
+                            {banks.length > 0 && (
+                                <section>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wider">Bancos</h3>
+                                        <button
+                                            onClick={() => { setEditBank(null); setShowBankModal(true) }}
+                                            className="text-xs font-bold text-navy-700 hover:text-navy-900 flex items-center gap-1"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">add</span> Nuevo banco
+                                        </button>
+                                    </div>
+                                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                                        {banks.map((bank, idx) => {
+                                            const linkedAccounts = accountsWithBalance.filter(a => a.bank_id === bank.id).length
+                                            const linkedCards = cardsWithBalance.filter(c => c.bank_name === bank.name).length
+                                            const entity = entities.find(e => e.id === bank.entity_id)
+                                            return (
+                                                <div key={bank.id} className={`flex items-center gap-4 px-4 py-3 ${idx < banks.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                                    <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                                                        <span className="material-symbols-outlined text-lg text-gray-500">corporate_fare</span>
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-bold text-navy-900">{bank.name}</p>
+                                                        <p className="text-[10px] text-gray-400">
+                                                            {entity ? entity.name : 'Sin entidad'}
+                                                            {(linkedAccounts > 0 || linkedCards > 0) && (
+                                                                <span> · {linkedAccounts > 0 && `${linkedAccounts} cuenta${linkedAccounts !== 1 ? 's' : ''}`}{linkedAccounts > 0 && linkedCards > 0 && ', '}{linkedCards > 0 && `${linkedCards} tarjeta${linkedCards !== 1 ? 's' : ''}`}</span>
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => { setEditBank(bank); setShowBankModal(true) }}
+                                                        className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-navy-900 transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-base">edit</span>
+                                                    </button>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
                                 </section>
                             )}
                         </div>
