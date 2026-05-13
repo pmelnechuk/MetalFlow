@@ -41,7 +41,6 @@ export function AccountModal({ account, entities, banks, onSave, onClose, onDele
     const [cardBrand, setCardBrand] = useState(account?.card_brand ?? '')
     const [confirmDelete, setConfirmDelete] = useState(false)
 
-    const filteredBanks = banks.filter(b => !b.entity_id || b.entity_id === entityId)
     const canSave = name.trim() && entityId
 
     const handleSave = () => {
@@ -123,7 +122,7 @@ export function AccountModal({ account, entities, banks, onSave, onClose, onDele
                     </div>
 
                     {/* Banco (solo para tipo bank) */}
-                    {type === 'bank' && filteredBanks.length > 0 && (
+                    {type === 'bank' && (
                         <div>
                             <label className="text-xs font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Banco</label>
                             <select
@@ -132,7 +131,7 @@ export function AccountModal({ account, entities, banks, onSave, onClose, onDele
                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
                             >
                                 <option value="">Sin banco</option>
-                                {filteredBanks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                {banks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                             </select>
                         </div>
                     )}
