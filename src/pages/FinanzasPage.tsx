@@ -86,35 +86,23 @@ export function FinanzasPage() {
     const [showItemModal, setShowItemModal] = useState(false)
     const [editItem, setEditItem] = useState<InventoryStock | null>(null)
 
-    const loadAccountsWithBalance = useCallback(async () => {
-        const data = await getAccountsWithBalance()
-        setAccountsWithBalance(data)
-    }, [getAccountsWithBalance])
-
     const loadStock = useCallback(async () => {
         const data = await getStock()
         setStockItems(data)
     }, [getStock])
 
-    const loadCardsWithBalance = useCallback(async () => {
-        const data = await getCardsWithBalance()
-        setCardsWithBalance(data)
-    }, [getCardsWithBalance])
-
-    const loadUpcomingInstallments = useCallback(async () => {
-        const data = await getUpcomingInstallments()
-        setUpcomingInstallments(data)
-    }, [getUpcomingInstallments])
-
     const loadCuentasData = useCallback(async () => {
         setCuentasLoading(true)
-        await Promise.all([
-            loadAccountsWithBalance(),
-            loadCardsWithBalance(),
-            loadUpcomingInstallments(),
+        const [accounts, cards, installments] = await Promise.all([
+            getAccountsWithBalance(),
+            getCardsWithBalance(),
+            getUpcomingInstallments(),
         ])
+        setAccountsWithBalance(accounts)
+        setCardsWithBalance(cards)
+        setUpcomingInstallments(installments)
         setCuentasLoading(false)
-    }, [loadAccountsWithBalance, loadCardsWithBalance, loadUpcomingInstallments])
+    }, [getAccountsWithBalance, getCardsWithBalance, getUpcomingInstallments])
 
     useEffect(() => { allProjects().then(setProjects) }, [allProjects])
 
@@ -445,7 +433,7 @@ export function FinanzasPage() {
                     {(['movimientos', 'inventario', 'cuentas', 'reportes'] as Tab[]).map(tab => (
                         <button
                             key={tab}
-                            onClick={() => setActiveTab(tab)}
+                            onClick={() => { if (tab === 'cuentas') setCuentasLoading(true); setActiveTab(tab) }}
                             className={cn(
                                 'px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all whitespace-nowrap',
                                 activeTab === tab ? 'bg-white text-navy-900 shadow-sm' : 'text-gray-500 hover:text-navy-900'
