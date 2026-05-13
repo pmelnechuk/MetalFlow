@@ -11,6 +11,17 @@ interface Props {
 
 const MONTH_NAMES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
+function nextOccurrence(day: number): { label: string; daysLeft: number } {
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const d = new Date(today.getFullYear(), today.getMonth(), day)
+    if (d <= today) d.setMonth(d.getMonth() + 1)
+    const daysLeft = Math.round((d.getTime() - today.getTime()) / 86400000)
+    return {
+        label: d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }),
+        daysLeft,
+    }
+}
+
 function groupByMonth(installments: UpcomingInstallment[]) {
     const map = new Map<string, { label: string; total: number; items: UpcomingInstallment[] }>()
     for (const inst of installments) {
@@ -92,11 +103,24 @@ export function CreditCardCard({ card, installments, onEdit, onNewInstallmentPur
                 </div>
 
                 {/* Closing/due info */}
-                <div className="flex gap-3 mb-4 text-[10px] font-bold uppercase text-gray-400">
-                    <span>Cierra día {card.closing_day}</span>
-                    <span>·</span>
-                    <span>Vence día {card.due_day}</span>
-                </div>
+                {(() => {
+                    const closing = nextOccurrence(card.closing_day)
+                    const due = nextOccurrence(card.due_day)
+                    return (
+                        <div className="flex gap-3 mb-4">
+                            <div className="flex-1 bg-gray-50 rounded-lg px-3 py-2">
+                                <p className="text-[9px] font-bold uppercase text-gray-400 tracking-wide">Próximo cierre</p>
+                                <p className="text-xs font-black text-navy-900">{closing.label}</p>
+                                <p className="text-[9px] text-gray-400">{closing.daysLeft === 0 ? 'hoy' : `en ${closing.daysLeft} días`}</p>
+                            </div>
+                            <div className="flex-1 bg-gray-50 rounded-lg px-3 py-2">
+                                <p className="text-[9px] font-bold uppercase text-gray-400 tracking-wide">Vencimiento pago</p>
+                                <p className="text-xs font-black text-navy-900">{due.label}</p>
+                                <p className="text-[9px] text-gray-400">{due.daysLeft === 0 ? 'hoy' : `en ${due.daysLeft} días`}</p>
+                            </div>
+                        </div>
+                    )
+                })()}
 
                 {/* 6-month timeline */}
                 {monthGroups.length > 0 && (

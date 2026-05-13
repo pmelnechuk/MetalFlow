@@ -9,6 +9,7 @@ import { CreditCardCard } from '../components/finanzas/CreditCardCard'
 import { CreditCardModal } from '../components/finanzas/CreditCardModal'
 import { InstallmentPurchaseModal } from '../components/finanzas/InstallmentPurchaseModal'
 import { InstallmentsView } from '../components/finanzas/InstallmentsView'
+import { ActiveInstallmentsSection } from '../components/finanzas/ActiveInstallmentsSection'
 import { InvoiceModal } from '../components/finanzas/InvoiceModal'
 import { InventoryItemCard } from '../components/finanzas/InventoryItemCard'
 import { InventoryItemModal } from '../components/finanzas/InventoryItemModal'
@@ -33,6 +34,7 @@ import type {
     CreditCardBalance, UpcomingInstallment,
     Account, ExpenseCategory, Bank, CreditCard,
 } from '../types/database'
+import type { ActivePurchase } from '../hooks/useInstallments'
 
 type Tab = 'movimientos' | 'inventario' | 'cuentas' | 'reportes'
 
@@ -58,7 +60,7 @@ export function FinanzasPage() {
     const { allProjects } = useProjects()
     const { banks, createBank, updateBank, deleteBank } = useBanks()
     const { cards, getCardsWithBalance, createCard, updateCard, deleteCard } = useCreditCards()
-    const { createInstallmentPurchase, payInstallment, getUpcomingInstallments } = useInstallments()
+    const { createInstallmentPurchase, payInstallment, getUpcomingInstallments, getActiveInstallmentPurchases, updateInstallmentPurchase, cancelInstallmentPurchase } = useInstallments()
     const { uploadReceipt, saveReceiptRecord } = useReceipts()
     const { suppliers } = useSuppliers()
 
@@ -67,6 +69,7 @@ export function FinanzasPage() {
     const [projects, setProjects] = useState<{ id: string; name: string; client: string; status: string | null }[]>([])
     const [cardsWithBalance, setCardsWithBalance] = useState<CreditCardBalance[]>([])
     const [upcomingInstallments, setUpcomingInstallments] = useState<UpcomingInstallment[]>([])
+    const [activePurchases, setActivePurchases] = useState<ActivePurchase[]>([])
     const [cuentasLoading, setCuentasLoading] = useState(false)
 
     // Modal state
@@ -93,16 +96,18 @@ export function FinanzasPage() {
 
     const loadCuentasData = useCallback(async () => {
         setCuentasLoading(true)
-        const [accounts, cards, installments] = await Promise.all([
+        const [accs, cds, insts, active] = await Promise.all([
             getAccountsWithBalance(),
             getCardsWithBalance(),
             getUpcomingInstallments(),
+            getActiveInstallmentPurchases(),
         ])
-        setAccountsWithBalance(accounts)
-        setCardsWithBalance(cards)
-        setUpcomingInstallments(installments)
+        setAccountsWithBalance(accs)
+        setCardsWithBalance(cds)
+        setUpcomingInstallments(insts)
+        setActivePurchases(active)
         setCuentasLoading(false)
-    }, [getAccountsWithBalance, getCardsWithBalance, getUpcomingInstallments])
+    }, [getAccountsWithBalance, getCardsWithBalance, getUpcomingInstallments, getActiveInstallmentPurchases])
 
     useEffect(() => { allProjects().then(setProjects) }, [allProjects])
 
@@ -334,6 +339,39 @@ export function FinanzasPage() {
             await payInstallment(installment.id, (mov as any).id)
         }
         loadCuentasData()
+    }
+
+    const handleBulkPayMonth = async (items: UpcomingInstallment[], accountId: string) => {
+        const account = accounts.find(a => a.id === accountId)
+        if (!account) return
+        const total = items.reduce((s, i) => s + i.amount, 0)
+        const cardNames = [...new Set(items.map(i => i.card_name))].join(', ')
+        const month = new Date(items[0].due_date + 'T00:00:00').toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
+        const mov = await createMovement({
+            entity_id: account.entity_id,
+            account_id: accountId,
+            type: 'gasto',
+            amount: -total,
+            date: new Date().toISOString().split('T')[0],
+            description: `Resumen tarjeta ${cardNames} — ${month}`,
+        })
+        if (mov) {
+            const movId = (mov as any).id
+            for (const inst of items) {
+                await payInstallment(inst.id, movId)
+            }
+        }
+        loadCuentasData()
+    }
+
+    const handleCancelPurchase = async (id: string) => {
+        await cancelInstallmentPurchase(id)
+        loadCuentasData()
+    }
+
+    const handleUpdatePurchase = async (id: string, data: { description?: string; category_id?: string | null }) => {
+        await updateInstallmentPurchase(id, data)
+        setActivePurchases(prev => prev.map(p => p.id === id ? { ...p, ...data, category: data.category_id === null ? null : p.category } : p))
     }
 
     // ── Inventory handlers ────────────────────────────────────────────────────
@@ -581,6 +619,20 @@ export function FinanzasPage() {
                                 )}
                             </section>
 
+                            {/* Active installment purchases */}
+                            <section>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-xs font-bold uppercase text-gray-500 tracking-wider">Compras activas en cuotas</h3>
+                                    <span className="text-[10px] font-bold text-gray-400">{activePurchases.length} activa{activePurchases.length !== 1 ? 's' : ''}</span>
+                                </div>
+                                <ActiveInstallmentsSection
+                                    purchases={activePurchases}
+                                    categories={categories}
+                                    onCancel={handleCancelPurchase}
+                                    onUpdate={handleUpdatePurchase}
+                                />
+                            </section>
+
                             {/* Upcoming installments timeline */}
                             {upcomingInstallments.filter(i => i.status !== 'pagado').length > 0 && (
                                 <section>
@@ -589,6 +641,7 @@ export function FinanzasPage() {
                                         installments={upcomingInstallments}
                                         accounts={accounts}
                                         onPayInstallment={handlePayInstallment}
+                                        onPayAllMonth={handleBulkPayMonth}
                                     />
                                 </section>
                             )}

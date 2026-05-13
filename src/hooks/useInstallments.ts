@@ -1,6 +1,23 @@
 import { useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import type { InstallmentPurchase, Installment, UpcomingInstallment } from '../types/database'
+import type { InstallmentPurchase, Installment, UpcomingInstallment, ExpenseCategory } from '../types/database'
+
+export interface ActivePurchase {
+    id: string
+    credit_card_id: string
+    description: string
+    total_amount: number
+    installment_amt: number
+    num_installments: number
+    first_due_date: string
+    status: string
+    category_id: string | null
+    project_id: string | null
+    created_at: string | null
+    credit_card: { id: string; name: string; due_day: number; closing_day: number } | null
+    category: Pick<ExpenseCategory, 'id' | 'name' | 'color' | 'icon'> | null
+    installments: { id: string; status: string }[]
+}
 
 function addMonths(date: Date, months: number): Date {
     const d = new Date(date)
@@ -109,11 +126,35 @@ export function useInstallments() {
         return true
     }, [])
 
+    const getActiveInstallmentPurchases = useCallback(async (): Promise<ActivePurchase[]> => {
+        const { data, error } = await supabase
+            .from('installment_purchases')
+            .select('*, credit_card:credit_cards(id, name, due_day, closing_day), category:expense_categories(id, name, color, icon), installments(id, status)')
+            .eq('status', 'activo')
+            .order('created_at', { ascending: false })
+        if (error) { console.error(error); return [] }
+        return (data || []) as ActivePurchase[]
+    }, [])
+
+    const updateInstallmentPurchase = useCallback(async (
+        id: string,
+        updates: { description?: string; category_id?: string | null }
+    ): Promise<boolean> => {
+        const { error } = await supabase
+            .from('installment_purchases')
+            .update(updates)
+            .eq('id', id)
+        if (error) { console.error(error); return false }
+        return true
+    }, [])
+
     return {
         createInstallmentPurchase,
         payInstallment,
         getUpcomingInstallments,
         getInstallmentsByPurchase,
+        getActiveInstallmentPurchases,
+        updateInstallmentPurchase,
         updateOverdueInstallments,
         cancelInstallmentPurchase,
     }
