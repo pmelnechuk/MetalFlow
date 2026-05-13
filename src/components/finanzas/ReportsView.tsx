@@ -55,6 +55,7 @@ export function ReportsView() {
     const [upcomingInstallments, setUpcomingInstallments] = useState<UpcomingInstallment[]>([])
     const [purchaseReport, setPurchaseReport] = useState<PurchaseReportRow[]>([])
     const [loading, setLoading] = useState(false)
+    const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
 
     const [periodFrom, setPeriodFrom] = useState(() => {
         const d = new Date()
@@ -275,13 +276,24 @@ export function ReportsView() {
                         {tab === 'tarjetas' && (() => {
                             const totalDebt = cardBalances.reduce((s, c) => s + c.debt_used, 0)
                             const MONTHS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
-                            const monthMap = new Map<string, number>()
+                            const nowKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`
+                            const monthMap = new Map<string, { total: number; items: UpcomingInstallment[] }>()
                             for (const inst of upcomingInstallments) {
                                 const d = new Date(inst.due_date + 'T00:00:00')
                                 const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
-                                monthMap.set(key, (monthMap.get(key) ?? 0) + inst.amount)
+                                const existing = monthMap.get(key) ?? { total: 0, items: [] }
+                                existing.total += inst.amount
+                                existing.items.push(inst)
+                                monthMap.set(key, existing)
                             }
                             const monthGroups = Array.from(monthMap.entries()).sort(([a],[b]) => a.localeCompare(b))
+
+                            const toggleMonth = (key: string) => setExpandedMonths(prev => {
+                                const next = new Set(prev)
+                                next.has(key) ? next.delete(key) : next.add(key)
+                                return next
+                            })
+
                             return (
                                 <>
                                     <div className="flex items-center justify-between mb-4">
@@ -316,16 +328,49 @@ export function ReportsView() {
 
                                     {monthGroups.length > 0 && (
                                         <div className="mt-4 pt-4 border-t border-gray-100">
-                                            <SectionTitle>Cuotas por vencer (6 meses)</SectionTitle>
-                                            {monthGroups.map(([key, total]) => {
+                                            <SectionTitle>Cuotas por vencer — toque para ver detalle</SectionTitle>
+                                            {monthGroups.map(([key, { total, items }]) => {
                                                 const [year, month] = key.split('-')
-                                                const isNow = key === `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`
+                                                const isNow = key === nowKey
+                                                const isExpanded = expandedMonths.has(key)
+                                                const sorted = [...items].sort((a, b) => b.amount - a.amount)
                                                 return (
-                                                    <div key={key} className={`flex items-center justify-between py-2 border-b border-gray-100 last:border-0 ${isNow ? 'font-bold' : ''}`}>
-                                                        <span className={`text-sm ${isNow ? 'text-navy-900 font-black' : 'text-gray-600 font-medium'}`}>
-                                                            {MONTHS[parseInt(month)-1]} {year}{isNow ? ' ← este mes' : ''}
-                                                        </span>
-                                                        <span className={`text-sm font-black ${isNow ? 'text-red-700' : 'text-gray-700'}`}>{formatCurrency(total)}</span>
+                                                    <div key={key} className="border-b border-gray-100 last:border-0">
+                                                        <button
+                                                            onClick={() => toggleMonth(key)}
+                                                            className="w-full flex items-center justify-between py-2.5 hover:bg-gray-50 transition-colors rounded-lg px-1 -mx-1"
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="material-symbols-outlined text-sm text-gray-400">
+                                                                    {isExpanded ? 'expand_less' : 'expand_more'}
+                                                                </span>
+                                                                <span className={`text-sm ${isNow ? 'text-navy-900 font-black' : 'text-gray-600 font-bold'}`}>
+                                                                    {MONTHS[parseInt(month)-1]} {year}
+                                                                </span>
+                                                                {isNow && <span className="text-[9px] font-black uppercase bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full">este mes</span>}
+                                                                <span className="text-[10px] text-gray-400">{items.length} cuota{items.length !== 1 ? 's' : ''}</span>
+                                                            </div>
+                                                            <span className={`text-sm font-black ${isNow ? 'text-red-700' : 'text-gray-700'}`}>{formatCurrency(total)}</span>
+                                                        </button>
+
+                                                        {isExpanded && (
+                                                            <div className="mb-2 ml-5 border-l-2 border-gray-100 pl-3 space-y-0">
+                                                                {sorted.map(inst => (
+                                                                    <div key={inst.id} className="flex items-center justify-between py-1.5">
+                                                                        <div className="flex-1 min-w-0 pr-2">
+                                                                            <p className="text-xs font-bold text-navy-900 truncate">{inst.description}</p>
+                                                                            <p className="text-[10px] text-gray-400">
+                                                                                {inst.card_name} · cuota {inst.installment_number}/{inst.num_installments}
+                                                                                {inst.category_name && <span style={{ color: inst.category_color ?? undefined }}> · {inst.category_name}</span>}
+                                                                            </p>
+                                                                        </div>
+                                                                        <span className={`text-xs font-black shrink-0 ${inst.status === 'vencido' ? 'text-red-600' : 'text-gray-700'}`}>
+                                                                            {formatCurrency(inst.amount)}
+                                                                        </span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )
                                             })}
