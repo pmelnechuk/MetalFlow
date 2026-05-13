@@ -637,6 +637,7 @@ export function FinanzasPage() {
                     employees={employees}
                     projects={projects as any}
                     entities={entities}
+                    banks={banks}
                     onSave={handleSaveMovement}
                     onClose={() => { setShowMovementModal(false); setEditMovement(null) }}
                     onDelete={editMovement ? handleDeleteMovement : undefined}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Movement, MovementType, Account, ExpenseCategory, InventoryItem, Entity } from '../../types/database'
+import type { Movement, MovementType, Account, ExpenseCategory, InventoryItem, Entity, Bank } from '../../types/database'
 import type { Employee, Project } from '../../types/database'
 import { AccountModal } from './AccountModal'
 
@@ -35,6 +35,7 @@ interface Props {
     employees: Employee[]
     projects: Project[]
     entities: Entity[]
+    banks: Bank[]
     onSave: (data: {
         entity_id: string
         account_id: string
@@ -56,7 +57,7 @@ interface Props {
 
 export function MovementModal({
     movement, accounts: accountsProp, categories: categoriesProp,
-    inventoryItems, employees, projects, entities,
+    inventoryItems, employees, projects, entities, banks,
     onSave, onClose, onDelete, onCreateAccount, onCreateCategory,
 }: Props) {
     const [type, setType]               = useState<MovementType>(movement?.type ?? 'gasto')
@@ -465,7 +466,7 @@ export function MovementModal({
             <div className="fixed inset-0 z-[60]">
                 <AccountModal
                     entities={entities}
-                    banks={[]}
+                    banks={banks}
                     onSave={handleCreateAccount}
                     onClose={() => setShowNewAccount(false)}
                 />
