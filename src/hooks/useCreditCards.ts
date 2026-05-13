@@ -18,7 +18,7 @@ export function useCreditCards() {
 
     useEffect(() => { fetchCards() }, [fetchCards])
 
-    const getCardsWithBalance = async (): Promise<CreditCardBalance[]> => {
+    const getCardsWithBalance = useCallback(async (): Promise<CreditCardBalance[]> => {
         const db = supabase as any
         const { data, error } = await db
             .from('credit_card_balances')
@@ -27,7 +27,7 @@ export function useCreditCards() {
             .order('name')
         if (error) { console.error(error); return [] }
         return (data || []) as CreditCardBalance[]
-    }
+    }, [])
 
     const createCard = async (data: Omit<CreditCard, 'id' | 'created_at'>) => {
         const { data: created, error } = await supabase
