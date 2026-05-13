@@ -64,7 +64,7 @@ function makeLineItem(item?: Partial<LineItem>): LineItem {
 }
 
 export function InvoiceModal({
-    accounts, entities, categories, inventoryItems,
+    accounts, categories, inventoryItems,
     creditCards, suppliers, projects,
     onSave, onClose
 }: Props) {

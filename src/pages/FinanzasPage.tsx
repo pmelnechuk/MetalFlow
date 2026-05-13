@@ -694,6 +694,7 @@ export function FinanzasPage() {
                     categories={categories}
                     projects={projects as any}
                     purchaseId={undefined}
+                    defaultCardId={installmentCardId}
                     onSave={handleSaveInstallmentPurchase}
                     onClose={() => { setShowInstallmentModal(false); setInstallmentCardId(undefined) }}
                 />

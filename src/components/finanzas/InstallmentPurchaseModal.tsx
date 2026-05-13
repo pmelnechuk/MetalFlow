@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import type { CreditCard, Entity, ExpenseCategory, Project } from '../../types/database'
+import type { CreditCard, Entity, ExpenseCategory } from '../../types/database'
 import { formatCurrency } from '../../lib/utils'
 
 interface Props {
@@ -8,6 +8,7 @@ interface Props {
     categories: ExpenseCategory[]
     projects: { id: string; name: string; client: string }[]
     purchaseId?: string
+    defaultCardId?: string
     initialDescription?: string
     initialAmount?: string
     onSave: (data: {
@@ -32,11 +33,11 @@ function nextDueDate(dueDay: number): string {
 
 export function InstallmentPurchaseModal({
     cards, entities, categories, projects,
-    purchaseId, initialDescription = '', initialAmount = '',
+    purchaseId, defaultCardId, initialDescription = '', initialAmount = '',
     onSave, onClose
 }: Props) {
     const activeCards = cards.filter(c => c.active)
-    const [cardId, setCardId] = useState(activeCards[0]?.id ?? '')
+    const [cardId, setCardId] = useState(defaultCardId ?? activeCards[0]?.id ?? '')
     const [description, setDescription] = useState(initialDescription)
     const [totalAmount, setTotalAmount] = useState(initialAmount)
     const [numInstallments, setNumInstallments] = useState('1')

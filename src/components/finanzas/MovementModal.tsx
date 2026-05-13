@@ -465,6 +465,7 @@ export function MovementModal({
             <div className="fixed inset-0 z-[60]">
                 <AccountModal
                     entities={entities}
+                    banks={[]}
                     onSave={handleCreateAccount}
                     onClose={() => setShowNewAccount(false)}
                 />
