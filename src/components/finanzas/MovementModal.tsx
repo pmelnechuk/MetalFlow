@@ -117,6 +117,7 @@ export function MovementModal({
     const [payMethod, setPayMethod] = useState<'cuenta' | 'tarjeta'>(movement ? 'cuenta' : 'cuenta')
     const [cardId, setCardId] = useState(creditCards[0]?.id ?? '')
     const [numInstallments, setNumInstallments] = useState('1')
+    const [amountMode, setAmountMode] = useState<'total' | 'cuota'>('total')
     const selectedCard = creditCards.find(c => c.id === cardId)
 
     // Inline creation states
@@ -135,8 +136,13 @@ export function MovementModal({
     const needsInventory  = type === 'compra_insumo' || type === 'consumo_insumo'
 
     const useCard = isExpenseType && payMethod === 'tarjeta' && !movement
+    const parsedAmount = parseFloat(amount) || 0
+    const n = parseInt(numInstallments) || 1
+    const cardTotal = useCard ? (amountMode === 'total' ? parsedAmount : parsedAmount * n) : parsedAmount
+    const cardCuota = useCard ? (amountMode === 'total' ? parsedAmount / n : parsedAmount) : 0
+
     const canSave = amount && parseFloat(amount) > 0 && entityId &&
-        (useCard ? (cardId && parseInt(numInstallments) >= 1) : !!accountId)
+        (useCard ? (cardId && n >= 1) : !!accountId)
 
     const handleSave = () => {
         if (!canSave) return
@@ -144,8 +150,8 @@ export function MovementModal({
             onSaveInstallment({
                 credit_card_id: cardId,
                 description: description.trim() || 'Gasto tarjeta',
-                total_amount: parseFloat(amount),
-                num_installments: parseInt(numInstallments) || 1,
+                total_amount: cardTotal,
+                num_installments: n,
                 first_due_date: nextDueDate(selectedCard.due_day),
                 category_id: needsCategory ? (categoryId || undefined) : undefined,
                 project_id: needsProject ? (projectId || undefined) : undefined,
@@ -333,11 +339,6 @@ export function MovementModal({
                                 max="60"
                                 className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
                             />
-                            {selectedCard && parseFloat(amount) > 0 && (
-                                <p className="text-[11px] text-gray-500 mt-1">
-                                    {parseInt(numInstallments) || 1}x de ${(parseFloat(amount) / (parseInt(numInstallments) || 1)).toLocaleString('es-AR', { maximumFractionDigits: 0 })} — vence {selectedCard.due_day} de cada mes
-                                </p>
-                            )}
                         </div>
                     </div>
                     )}
@@ -345,7 +346,27 @@ export function MovementModal({
                     {/* Monto + Fecha */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Importe *</label>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="text-[10px] font-bold uppercase text-gray-500 tracking-wide">
+                                    {useCard ? (amountMode === 'total' ? 'Total *' : 'Valor cuota *') : 'Importe *'}
+                                </label>
+                                {useCard && (
+                                    <div className="flex bg-gray-100 rounded-lg p-0.5">
+                                        <button
+                                            onClick={() => setAmountMode('total')}
+                                            className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase transition-all ${amountMode === 'total' ? 'bg-white text-navy-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                        >
+                                            Total
+                                        </button>
+                                        <button
+                                            onClick={() => setAmountMode('cuota')}
+                                            className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase transition-all ${amountMode === 'cuota' ? 'bg-white text-navy-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                        >
+                                            x cuota
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">$</span>
                                 <input
@@ -359,6 +380,15 @@ export function MovementModal({
                                     className="w-full pl-7 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm font-bold text-navy-900 bg-white focus:border-navy-900 focus:ring-1 focus:ring-navy-900 outline-none"
                                 />
                             </div>
+                            {useCard && parsedAmount > 0 && (
+                                <p className="text-[10px] text-purple-600 mt-1 font-medium">
+                                    {amountMode === 'total'
+                                        ? `${n}x de $${cardCuota.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
+                                        : `Total: $${cardTotal.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
+                                    }
+                                    {selectedCard && <span className="text-purple-400"> · vence día {selectedCard.due_day}</span>}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label className="text-[10px] font-bold uppercase text-gray-500 mb-1.5 block tracking-wide">Fecha *</label>
