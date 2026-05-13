@@ -50,7 +50,7 @@ export function FinanzasPage() {
     const [activeTab, setActiveTab] = useState<Tab>('movimientos')
 
     const { movements, loading: movementsLoading, filters, setFilters, createMovement, createTransfer, updateMovement, deleteMovement } = useMovements()
-    const { accounts, loading: accountsLoading, getAccountsWithBalance, createAccount, updateAccount, deleteAccount } = useAccounts()
+    const { accounts, getAccountsWithBalance, createAccount, updateAccount, deleteAccount } = useAccounts()
     const { items: inventoryItems, loading: inventoryLoading, getStock, createItem, updateItem, deleteItem } = useInventory()
     const { entities } = useEntities()
     const { categories, createCategory } = useExpenseCategories()
@@ -67,6 +67,7 @@ export function FinanzasPage() {
     const [projects, setProjects] = useState<{ id: string; name: string; client: string; status: string | null }[]>([])
     const [cardsWithBalance, setCardsWithBalance] = useState<CreditCardBalance[]>([])
     const [upcomingInstallments, setUpcomingInstallments] = useState<UpcomingInstallment[]>([])
+    const [cuentasLoading, setCuentasLoading] = useState(false)
 
     // Modal state
     const [showMovementModal, setShowMovementModal] = useState(false)
@@ -105,15 +106,21 @@ export function FinanzasPage() {
         setUpcomingInstallments(data)
     }, [getUpcomingInstallments])
 
+    const loadCuentasData = useCallback(async () => {
+        setCuentasLoading(true)
+        await Promise.all([
+            loadAccountsWithBalance(),
+            loadCardsWithBalance(),
+            loadUpcomingInstallments(),
+        ])
+        setCuentasLoading(false)
+    }, [loadAccountsWithBalance, loadCardsWithBalance, loadUpcomingInstallments])
+
     useEffect(() => { allProjects().then(setProjects) }, [allProjects])
 
     useEffect(() => {
-        if (activeTab === 'cuentas') {
-            loadAccountsWithBalance()
-            loadCardsWithBalance()
-            loadUpcomingInstallments()
-        }
-    }, [activeTab, loadAccountsWithBalance, loadCardsWithBalance, loadUpcomingInstallments])
+        if (activeTab === 'cuentas') loadCuentasData()
+    }, [activeTab, loadCuentasData])
 
     useEffect(() => {
         if (activeTab === 'inventario') loadStock()
@@ -142,13 +149,13 @@ export function FinanzasPage() {
         setShowMovementModal(false)
         setEditMovement(null)
         if (activeTab === 'inventario') loadStock()
-        if (activeTab === 'cuentas') loadAccountsWithBalance()
+        if (activeTab === 'cuentas') loadCuentasData()
     }
 
     const handleSaveTransfer = async (data: Parameters<typeof createTransfer>[0]) => {
         await createTransfer(data)
         setShowTransferModal(false)
-        if (activeTab === 'cuentas') loadAccountsWithBalance()
+        if (activeTab === 'cuentas') loadCuentasData()
     }
 
     type InvoiceSaveData = {
@@ -247,8 +254,8 @@ export function FinanzasPage() {
 
         setShowInvoiceModal(false)
         if (activeTab === 'inventario') loadStock()
-        if (activeTab === 'cuentas') { loadAccountsWithBalance(); loadCardsWithBalance() }
-    }, [cards, createItem, createMovement, createInstallmentPurchase, uploadReceipt, saveReceiptRecord, activeTab, loadStock, loadAccountsWithBalance, loadCardsWithBalance])
+        if (activeTab === 'cuentas') loadCuentasData()
+    }, [cards, createItem, createMovement, createInstallmentPurchase, uploadReceipt, saveReceiptRecord, activeTab, loadStock, loadCuentasData])
 
     // ── Account handlers ──────────────────────────────────────────────────────
     const handleSaveAccount = async (data: Parameters<typeof createAccount>[0]) => {
@@ -264,7 +271,7 @@ export function FinanzasPage() {
         setShowAccountModal(false)
         setEditAccount(null)
         setAccountDeleteError('')
-        loadAccountsWithBalance()
+        loadCuentasData()
     }
 
     const handleDeleteAccount = async () => {
@@ -274,7 +281,7 @@ export function FinanzasPage() {
             setAccountDeleteError(result.error || 'Error al eliminar.')
         } else {
             setShowAccountModal(false); setEditAccount(null); setAccountDeleteError('')
-            loadAccountsWithBalance()
+            loadCuentasData()
         }
     }
 
@@ -305,7 +312,7 @@ export function FinanzasPage() {
         }
         setShowCardModal(false)
         setEditCard(null)
-        loadCardsWithBalance()
+        loadCuentasData()
     }
 
     const handleDeleteCard = async () => {
@@ -313,7 +320,7 @@ export function FinanzasPage() {
         await deleteCard(editCard.id)
         setShowCardModal(false)
         setEditCard(null)
-        loadCardsWithBalance()
+        loadCuentasData()
     }
 
     // ── Installment handlers ──────────────────────────────────────────────────
@@ -321,8 +328,7 @@ export function FinanzasPage() {
         await createInstallmentPurchase(data)
         setShowInstallmentModal(false)
         setInstallmentCardId(undefined)
-        loadCardsWithBalance()
-        loadUpcomingInstallments()
+        loadCuentasData()
     }
 
     const handlePayInstallment = async (installment: UpcomingInstallment, accountId: string) => {
@@ -339,9 +345,7 @@ export function FinanzasPage() {
         if (mov) {
             await payInstallment(installment.id, (mov as any).id)
         }
-        loadCardsWithBalance()
-        loadUpcomingInstallments()
-        loadAccountsWithBalance()
+        loadCuentasData()
     }
 
     // ── Inventory handlers ────────────────────────────────────────────────────
@@ -526,7 +530,7 @@ export function FinanzasPage() {
 
                 {/* CUENTAS */}
                 {activeTab === 'cuentas' && (
-                    accountsLoading ? (
+                    cuentasLoading ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {[1,2,3].map(i => <div key={i} className="h-36 bg-gray-100 rounded-xl animate-pulse" />)}
                         </div>
